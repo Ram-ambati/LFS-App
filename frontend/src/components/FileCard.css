@@ -1,0 +1,83 @@
+.file-card {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: var(--color-bg-glass);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--color-border-glass);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-base);
+}
+
+.file-card:hover {
+  background: rgba(139, 92, 246, 0.05);
+  border-color: rgba(139, 92, 246, 0.2);
+  transform: translateY(-2px);
+}
+
+.file-card__icon {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gradient-accent);
+  border-radius: var(--radius-md);
+  color: white;
+}
+
+.file-card__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-card__name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-card__details {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.file-card__size {
+  font-weight: 500;
+}
+
+.file-card__separator {
+  color: var(--color-text-tertiary);
+}
+
+.file-card__date {
+  color: var(--color-text-tertiary);
+}
+
+@media (max-width: 768px) {
+  .file-card {
+    gap: 1rem;
+  }
+
+  .file-card__icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .file-card__name {
+    font-size: 0.9375rem;
+  }
+
+  .file-card__details {
+    font-size: 0.8125rem;
+  }
+}

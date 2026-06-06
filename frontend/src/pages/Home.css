@@ -1,0 +1,232 @@
+.home {
+  display: flex;
+  flex-direction: column;
+  gap: 4rem;
+}
+
+.home__hero {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.home__title {
+  font-size: 3.5rem;
+  font-weight: 700;
+  background: var(--gradient-accent);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1rem;
+  line-height: 1.1;
+}
+
+.home__subtitle {
+  font-size: 1.25rem;
+  color: var(--color-text-secondary);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.home__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.home__card {
+  padding: 2.5rem;
+  background: var(--color-bg-glass);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--color-border-glass);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.home__card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gradient-card);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+  pointer-events: none;
+}
+
+.home__card:hover {
+  border-color: var(--color-accent-primary);
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(139, 92, 246, 0.2);
+}
+
+.home__card:hover::before {
+  opacity: 1;
+}
+
+.home__card--upload {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(139, 92, 246, 0.02));
+  border-color: rgba(139, 92, 246, 0.1);
+}
+
+.home__card--download {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.05), rgba(6, 182, 212, 0.02));
+  border-color: rgba(6, 182, 212, 0.1);
+}
+
+.home__card-icon {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 1.5rem;
+  background: var(--gradient-accent);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  transition: all var(--transition-base);
+}
+
+.home__card:hover .home__card-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.home__card h2 {
+  font-size: 1.5rem;
+  color: var(--color-text-primary);
+  margin-bottom: 0.75rem;
+  position: relative;
+  z-index: 1;
+}
+
+.home__card p {
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+.home__card-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: var(--radius-md);
+  color: var(--color-accent-primary);
+  transition: all var(--transition-base);
+  position: relative;
+  z-index: 1;
+}
+
+.home__card:hover .home__card-arrow {
+  background: var(--gradient-accent);
+  color: white;
+  transform: translateX(4px);
+}
+
+.home__features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.home__feature {
+  text-align: center;
+  padding: 2rem;
+  background: var(--color-bg-glass);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--color-border-glass);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-base);
+}
+
+.home__feature:hover {
+  border-color: var(--color-accent-secondary);
+  transform: translateY(-4px);
+}
+
+.home__feature-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 1rem;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(6, 182, 212, 0.1));
+  border: 1px solid var(--color-border-glass);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-accent-secondary);
+  transition: all var(--transition-base);
+}
+
+.home__feature:hover .home__feature-icon {
+  background: var(--gradient-accent);
+  color: white;
+  transform: scale(1.1);
+}
+
+.home__feature h3 {
+  font-size: 1.125rem;
+  color: var(--color-text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.home__feature p {
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+}
+
+@media (max-width: 1024px) {
+  .home__title {
+    font-size: 2.5rem;
+  }
+
+  .home__subtitle {
+    font-size: 1.125rem;
+  }
+
+  .home__cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .home {
+    gap: 3rem;
+  }
+
+  .home__title {
+    font-size: 2rem;
+  }
+
+  .home__subtitle {
+    font-size: 1rem;
+  }
+
+  .home__card {
+    padding: 1.5rem;
+  }
+
+  .home__card-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .home__card h2 {
+    font-size: 1.25rem;
+  }
+
+  .home__features {
+    gap: 1.5rem;
+  }
+
+  .home__feature {
+    padding: 1.5rem;
+  }
+}

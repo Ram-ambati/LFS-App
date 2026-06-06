@@ -1,0 +1,97 @@
+.upload-zone {
+  border: 2px dashed var(--color-accent-primary);
+  border-radius: var(--radius-lg);
+  padding: 3rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  background: var(--color-bg-glass);
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-zone::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(6, 182, 212, 0.05));
+  opacity: 0;
+  transition: opacity var(--transition-base);
+  pointer-events: none;
+}
+
+.upload-zone:hover {
+  border-color: var(--color-accent-secondary);
+  background: rgba(19, 24, 41, 0.6);
+}
+
+.upload-zone:hover::before {
+  opacity: 1;
+}
+
+.upload-zone--dragging {
+  border-color: var(--color-accent-secondary);
+  background: rgba(6, 182, 212, 0.1);
+  transform: scale(1.02);
+}
+
+.upload-zone--dragging::before {
+  opacity: 1;
+}
+
+.upload-zone--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.upload-zone__input {
+  display: none;
+}
+
+.upload-zone__content {
+  position: relative;
+  z-index: 1;
+}
+
+.upload-zone__icon {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 1.5rem;
+  color: var(--color-accent-primary);
+  opacity: 0.8;
+  transition: all var(--transition-base);
+}
+
+.upload-zone:hover .upload-zone__icon {
+  color: var(--color-accent-secondary);
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.upload-zone__text {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.upload-zone__subtext {
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+}
+
+@media (max-width: 768px) {
+  .upload-zone {
+    padding: 2rem 1.5rem;
+  }
+
+  .upload-zone__icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .upload-zone__text {
+    font-size: 1rem;
+  }
+}

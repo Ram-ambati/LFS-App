@@ -35,6 +35,14 @@ public class FileStorageService {
         return filePath.toString();
     }
 
+    public byte[] retrieveFile(String storagePath) throws IOException {
+        Path filePath = Paths.get(storagePath);
+        if (!Files.exists(filePath)) {
+            throw new IllegalArgumentException("File not found: " + storagePath);
+        }
+        return Files.readAllBytes(filePath);
+    }
+
     private String generateUniqueFileName(String originalFileName) {
         if (originalFileName == null || originalFileName.isEmpty()) {
             return UUID.randomUUID().toString();

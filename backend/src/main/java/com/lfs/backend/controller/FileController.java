@@ -4,14 +4,19 @@ import java.io.IOException;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.lfs.backend.dto.FileInfoResponse;
 import com.lfs.backend.dto.FileUploadResponse;
 import com.lfs.backend.entity.FileShare;
 import com.lfs.backend.entity.User;
@@ -78,6 +83,57 @@ public class FileController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorResponse("An unexpected error occurred: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/info/{token}")
+    public ResponseEntity<?> getFileInfo(@PathVariable String token) {
+        try {
+            FileShare fileShare = fileShareRepository.findByShareToken(token)
+                    .orElseThrow(() -> new IllegalArgumentException("File not found with token: " + token));
+
+            FileInfoResponse response = new FileInfoResponse(
+                    fileShare.getShareToken(),
+                    fileShare.getOriginalFileName(),
+                    null, // File size will be calculated if needed
+                    fileShare.getCreatedAt()
+            );
+
+            return ResponseEntity.ok(response);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("An error occurred: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/download/{token}")
+    public ResponseEntity<?> downloadFile(@PathVariable String token) {
+        try {
+            FileShare fileShare = fileShareRepository.findByShareToken(token)
+                    .orElseThrow(() -> new IllegalArgumentException("File not found with token: " + token));
+
+            byte[] fileContent = fileStorageService.retrieveFile(fileShare.getStoragePath());
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, 
+                            "attachment; filename=\"" + fileShare.getOriginalFileName() + "\"")
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .contentLength(fileContent.length)
+                    .body(fileContent);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse(e.getMessage()));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("Error reading file: " + e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("An error occurred: " + e.getMessage()));
         }
     }
 

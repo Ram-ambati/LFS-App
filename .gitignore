@@ -40,3 +40,36 @@ bin/
 /dataSources.local.xml
 # Editor-based HTTP Client requests
 /httpRequests/
+
+### Backend (Maven/Spring Boot) ###
+/backend/target/
+/backend/*.log
+/backend/uploads/
+/backend/.mvn/wrapper/maven-wrapper.jar
+**/MANIFEST.MF
+
+### Frontend (Node/Vite) ###
+/frontend/node_modules/
+/frontend/dist/
+/frontend/build/
+/frontend/.env
+/frontend/.env.local
+/frontend/.env.*.local
+/frontend/pnpm-lock.yaml
+/frontend/package-lock.json
+
+### Temporary/Generated Files ###
+*.swp
+*.swo
+*~
+.DS_Store
+*.tmp
+*.log
+.env
+.env.local
+
+### IDE ###
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project

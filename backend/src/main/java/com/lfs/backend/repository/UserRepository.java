@@ -1,7 +1,12 @@
 package com.lfs.backend.repository;
 
-import com.lfs.backend.entity.User;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import com.lfs.backend.entity.User;
+
 public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByEmail(String email);
+    Optional<User> findByUsername(String username);
 }

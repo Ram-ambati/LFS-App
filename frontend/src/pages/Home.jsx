@@ -1,12 +1,18 @@
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import PageContainer from '../components/PageContainer';
+import LimitDisplay from '../components/LimitDisplay';
 import './Home.css';
 
 export default function Home() {
   const navigate = useNavigate();
+  const { type } = useAuth();
 
   return (
     <PageContainer className="home">
+      {/* Show limit display for authenticated users */}
+      {(type === 'guest' || type === 'signed-in') && <LimitDisplay />}
+
       <div className="home__hero">
         <h1 className="home__title">Secure File Sharing</h1>
         <p className="home__subtitle">

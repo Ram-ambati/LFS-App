@@ -45,6 +45,11 @@ bin/
 /backend/target/
 /backend/*.log
 /backend/uploads/
+/backend/cookies.json
+/backend/cookies.txt
+/backend/startup.log
+/backend/startup_error.txt
+/backend/startup_log.txt
 /backend/.mvn/wrapper/maven-wrapper.jar
 **/MANIFEST.MF
 

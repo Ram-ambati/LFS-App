@@ -72,6 +72,12 @@ bin/
 *.log
 .env
 .env.local
+BACKEND_AUTH_GUIDE.md
+BACKEND_AUTH_IMPLEMENTATION.md
+FRONTEND_AUTH_SETUP.md
+QUICK_START.md
+/downloaded-file.txt
+/test-upload.txt
 
 ### IDE ###
 .vscode/

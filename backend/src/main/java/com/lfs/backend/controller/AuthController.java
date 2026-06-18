@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -29,11 +30,80 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/auth")
 public class AuthController {
 
+    @Value("${app.environment:development}")
+    private String environment;
+
     @Autowired
     private AuthService authService;
 
     @Autowired
     private LimitService limitService;
+
+    /**
+     * Helper method to create secure authentication cookies
+     * - In production: includes Secure flag for HTTPS and SameSite=None for cross-domain
+     * - In development: excludes Secure flag to support HTTP localhost
+     */
+    private ResponseCookie createAccessTokenCookie(String token) {
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from("LFS_AUTH", token)
+                .httpOnly(true)
+                .path("/")
+                .maxAge(3600);  // 1 hour
+
+        if (!"development".equals(environment)) {
+            builder.secure(true)          // HTTPS only
+                   .sameSite("None");     // Allow cross-domain (Vercel -> Render)
+        }
+        return builder.build();
+    }
+
+    /**
+     * Helper method to create refresh token cookie
+     */
+    private ResponseCookie createRefreshTokenCookie(String token) {
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from("LFS_REFRESH", token)
+                .httpOnly(true)
+                .path("/")
+                .maxAge(2592000);  // 30 days
+
+        if (!"development".equals(environment)) {
+            builder.secure(true)
+                   .sameSite("None");
+        }
+        return builder.build();
+    }
+
+    /**
+     * Helper method to clear authentication cookies (for logout)
+     */
+    private ResponseCookie clearAccessTokenCookie() {
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from("LFS_AUTH", "")
+                .httpOnly(true)
+                .path("/")
+                .maxAge(0);
+
+        if (!"development".equals(environment)) {
+            builder.secure(true)
+                   .sameSite("None");
+        }
+        return builder.build();
+    }
+
+    /**
+     * Helper method to clear refresh token cookie
+     */
+    private ResponseCookie clearRefreshTokenCookie() {
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from("LFS_REFRESH", "")
+                .httpOnly(true)
+                .path("/")
+                .maxAge(0);
+
+        if (!"development".equals(environment)) {
+            builder.secure(true)
+                   .sameSite("None");
+        }
+        return builder.build();
+    }
 
     /**
      * Register new user
@@ -43,18 +113,10 @@ public class AuthController {
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
         try {
             AuthResponse authResponse = authService.register(request);
-            // set HttpOnly cookies for access and refresh tokens
-            ResponseCookie accessCookie = ResponseCookie.from("LFS_AUTH", authResponse.getToken())
-                .httpOnly(true)
-                .path("/")
-                .maxAge(3600)
-                .build();
-
-            ResponseCookie refreshCookie = ResponseCookie.from("LFS_REFRESH", authResponse.getRefreshToken())
-                .httpOnly(true)
-                .path("/")
-                .maxAge(2592000)
-                .build();
+            
+            // Create secure authentication cookies
+            ResponseCookie accessCookie = createAccessTokenCookie(authResponse.getToken());
+            ResponseCookie refreshCookie = createRefreshTokenCookie(authResponse.getRefreshToken());
 
             HttpHeaders headers = new HttpHeaders();
             headers.add(HttpHeaders.SET_COOKIE, accessCookie.toString());
@@ -78,17 +140,10 @@ public class AuthController {
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         try {
             AuthResponse authResponse = authService.login(request);
-            ResponseCookie accessCookie = ResponseCookie.from("LFS_AUTH", authResponse.getToken())
-                .httpOnly(true)
-                .path("/")
-                .maxAge(3600)
-                .build();
-
-            ResponseCookie refreshCookie = ResponseCookie.from("LFS_REFRESH", authResponse.getRefreshToken())
-                .httpOnly(true)
-                .path("/")
-                .maxAge(2592000)
-                .build();
+            
+            // Create secure authentication cookies
+            ResponseCookie accessCookie = createAccessTokenCookie(authResponse.getToken());
+            ResponseCookie refreshCookie = createRefreshTokenCookie(authResponse.getRefreshToken());
 
             HttpHeaders headers = new HttpHeaders();
             headers.add(HttpHeaders.SET_COOKIE, accessCookie.toString());
@@ -132,11 +187,17 @@ public class AuthController {
      */
     @PostMapping("/logout")
     public ResponseEntity<?> logout() {
-        // JWT logout is typically handled on client by removing token
-        // Server can optionally maintain a token blacklist
+        // Clear authentication cookies by setting maxAge to 0
+        ResponseCookie accessCookie = clearAccessTokenCookie();
+        ResponseCookie refreshCookie = clearRefreshTokenCookie();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.SET_COOKIE, accessCookie.toString());
+        headers.add(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+
         Map<String, String> response = new HashMap<>();
         response.put("message", "Logged out successfully");
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok().headers(headers).body(response);
     }
 
     /**

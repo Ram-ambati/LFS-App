@@ -1,8 +1,10 @@
 package com.lfs.backend.config;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -28,6 +30,9 @@ public class SecurityConfig {
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @Value("${frontend.url:http://localhost:5173}")
+    private String frontendUrl;
+
     /**
      * Configure password encoder (BCrypt)
      */
@@ -45,19 +50,25 @@ public class SecurityConfig {
     }
 
     /**
-     * Configure CORS
+     * Configure CORS - allows requests from frontend URL (env var: FRONTEND_URL)
+     * Also allows local dev ports for testing
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:5173",  // Frontend dev server
-                "http://localhost:3000",  // Alternative dev port
-                "http://localhost:8080"   // Backend
-        ));
+        
+        // Build list of allowed origins
+        List<String> allowedOrigins = Arrays.asList(
+                frontendUrl,
+                "http://localhost:5173",   // Frontend Vite dev server
+                "http://localhost:3000",   // Alternative frontend port
+                "http://localhost:8080"    // Backend localhost
+        );
+        
+        configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setAllowCredentials(true);
+        configuration.setAllowCredentials(true);  // Required for cookies
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

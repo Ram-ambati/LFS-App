@@ -131,21 +131,22 @@ This opens:
 
 ### Completed
 
-* [x] Spring Boot Backend
-* [x] PostgreSQL Integration
-* [x] File Upload API
-* [x] File Download API
-* [x] React Frontend
-* [x] Token-Based Sharing
+* [x] Step 1: Move configuration to environment variables
+* [x] Step 2: Cookie security and environment-driven CORS
+* [x] Step 3: Database DDL configuration & migration guidance
+* [ ] Step 4: File storage migration plan (Cloudinary) — IN PROGRESS
+* [ ] Step 5: Render/Vercel deployment config
+* [ ] Step 6: Security headers & final hardening
+* [ ] Step 7: Final verification and deployment checklist
 
 ### Planned
 
 * [ ] Password Protected Downloads
 * [ ] File Expiry Dates
 * [ ] Download Limits
-* [ ] Cloud Storage Integration
-* [ ] User Authentication
-* [ ] Public Deployment
+* [ ] Cloud Storage Integration (Cloudinary/S3)
+* [ ] User Authentication improvements
+* [ ] Public Deployment (Render, Vercel, Supabase)
 * [ ] File Analytics Dashboard
 
 ---

@@ -134,10 +134,10 @@ This opens:
 * [x] Step 1: Move configuration to environment variables
 * [x] Step 2: Cookie security and environment-driven CORS
 * [x] Step 3: Database DDL configuration & migration guidance
-* [ ] Step 4: File storage migration plan (Cloudinary) — IN PROGRESS
-* [ ] Step 5: Render/Vercel deployment config
-* [ ] Step 6: Security headers & final hardening
-* [ ] Step 7: Final verification and deployment checklist
+* [x] Step 4: File storage migration plan (Cloudinary)
+* [x] Step 5: Render/Vercel deployment config
+* [x] Step 6: Security headers & final hardening
+* [x] Step 7: Final verification and deployment checklist
 
 ### Planned
 

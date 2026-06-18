@@ -6,6 +6,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -14,7 +16,15 @@ public class FileStorageService {
 
     private static final String UPLOAD_DIR = "uploads";
 
-    public FileStorageService() throws IOException {
+    private final CloudinaryService cloudinaryService;
+    private final boolean cloudinaryEnabled;
+
+    @Autowired
+    public FileStorageService(CloudinaryService cloudinaryService, @Value("${cloudinary.api-key:}") String cloudinaryApiKey) throws IOException {
+        this.cloudinaryService = cloudinaryService;
+        this.cloudinaryEnabled = cloudinaryService != null && cloudinaryService.isConfigured() && cloudinaryApiKey != null && !cloudinaryApiKey.isEmpty();
+
+        // Ensure local upload directory exists for development fallback
         Path uploadPath = Paths.get(UPLOAD_DIR);
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
@@ -24,6 +34,11 @@ public class FileStorageService {
     public String storeFile(MultipartFile file) throws IOException {
         if (file.isEmpty()) {
             throw new IllegalArgumentException("File is empty");
+        }
+
+        if (cloudinaryEnabled) {
+            // Upload to Cloudinary and return the secure URL
+            return cloudinaryService.uploadFile(file);
         }
 
         String fileName = generateUniqueFileName(file.getOriginalFilename());
@@ -36,6 +51,11 @@ public class FileStorageService {
     }
 
     public byte[] retrieveFile(String storagePath) throws IOException {
+        if (cloudinaryEnabled && storagePath != null && storagePath.startsWith("http")) {
+            // For Cloudinary-stored files, clients should use the URL directly; server can proxy if needed.
+            throw new IllegalArgumentException("Requested file is stored remotely. Proxy not implemented: " + storagePath);
+        }
+
         Path filePath = Paths.get(storagePath);
         if (!Files.exists(filePath)) {
             throw new IllegalArgumentException("File not found: " + storagePath);

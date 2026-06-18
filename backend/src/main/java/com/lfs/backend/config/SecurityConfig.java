@@ -106,6 +106,14 @@ public class SecurityConfig {
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-        return http.build();
+                // Security headers
+                http.headers(headers -> {
+                    headers.contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self' https:; img-src 'self' data: https://res.cloudinary.com; script-src 'self' 'unsafe-inline' https:; object-src 'none';"));
+                    headers.frameOptions(frame -> frame.sameOrigin());
+                    headers.httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000));
+                    headers.contentTypeOptions(cto -> {});
+                });
+
+            return http.build();
     }
 }

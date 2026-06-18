@@ -9,7 +9,7 @@
  * - GET /api/limits/current - Get current user limits
  */
 
-const API_BASE = 'http://localhost:8080/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
 // Guest Session Management
 const GUEST_ID_KEY = 'lfs_guest_id';

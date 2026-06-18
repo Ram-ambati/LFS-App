@@ -113,6 +113,18 @@ npm install
 npm run dev
 ```
 
+### Run Both at Once (Windows)
+
+If you want to start the backend and frontend in separate terminals with one command, use the launcher script at the project root:
+
+```bat
+start-app.bat
+```
+
+This opens:
+- one terminal for the Spring Boot backend
+- one terminal for the React/Vite frontend
+
 ---
 
 ## 🎯 Roadmap

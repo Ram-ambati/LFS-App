@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './hooks/useAuth';
 import { authService } from './services/authService';
@@ -41,6 +42,7 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <AppContent />
+        <Analytics />
       </AuthProvider>
     </BrowserRouter>
   );

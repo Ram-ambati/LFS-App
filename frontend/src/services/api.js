@@ -23,8 +23,15 @@ export const fileService = {
       ? `${API_BASE_URL}/files/upload?guestToken=${encodeURIComponent(guestId)}`
       : `${API_BASE_URL}/files/upload`;
 
+    const headers = {};
+    const token = localStorage.getItem('lfs_jwt_token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(url, {
       method: 'POST',
+      headers,
       body: formData,
       credentials: 'include',
     });
@@ -66,7 +73,14 @@ export const fileService = {
       ? `${API_BASE_URL}/files/download/${token}?guestToken=${encodeURIComponent(guestId)}`
       : `${API_BASE_URL}/files/download/${token}`;
 
+    const headers = {};
+    const jwtToken = localStorage.getItem('lfs_jwt_token');
+    if (jwtToken) {
+      headers['Authorization'] = `Bearer ${jwtToken}`;
+    }
+
     const response = await fetch(url, {
+      headers,
       credentials: 'include',
     });
 

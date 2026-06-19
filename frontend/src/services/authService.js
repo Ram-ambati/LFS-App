@@ -19,12 +19,21 @@ export const authService = {
   // Check current auth status
   async checkSession() {
     try {
+      const token = localStorage.getItem('lfs_jwt_token');
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${API_BASE}/auth/me`, {
         method: 'GET',
+        headers,
         credentials: 'include', // Include httpOnly cookies
       });
       if (response.ok) {
         return { type: 'signed-in', user: await response.json() };
+      } else if (response.status === 401 && token) {
+        localStorage.removeItem('lfs_jwt_token');
       }
     } catch (error) {
       console.error('Error checking session:', error);
@@ -105,10 +114,13 @@ export const authService = {
         throw new Error(error.message || 'Login failed');
       }
 
-      const user = await response.json();
+      const data = await response.json();
+      if (data.token) {
+        localStorage.setItem('lfs_jwt_token', data.token);
+      }
       // Clear any guest session
       this.clearGuestId();
-      return { success: true, user };
+      return { success: true, user: data };
     } catch (error) {
       return { success: false, error: error.message };
     }
@@ -129,10 +141,13 @@ export const authService = {
         throw new Error(error.message || 'Registration failed');
       }
 
-      const user = await response.json();
+      const data = await response.json();
+      if (data.token) {
+        localStorage.setItem('lfs_jwt_token', data.token);
+      }
       // Clear any guest session
       this.clearGuestId();
-      return { success: true, user };
+      return { success: true, user: data };
     } catch (error) {
       return { success: false, error: error.message };
     }
@@ -141,14 +156,21 @@ export const authService = {
   // Sign out
   async logout() {
     try {
+      const token = localStorage.getItem('lfs_jwt_token');
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
       await fetch(`${API_BASE}/auth/logout`, {
         method: 'POST',
+        headers,
         credentials: 'include',
       });
     } catch (error) {
       console.error('Error logging out:', error);
     }
     this.clearGuestId();
+    localStorage.removeItem('lfs_jwt_token');
   },
 
   // Get current user limits
@@ -159,8 +181,15 @@ export const authService = {
         ? `${API_BASE}/limits/current?guestToken=${encodeURIComponent(guestId)}`
         : `${API_BASE}/limits/current`;
 
+      const headers = {};
+      const token = localStorage.getItem('lfs_jwt_token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(url, {
         method: 'GET',
+        headers,
         credentials: 'include',
       });
       if (response.ok) {

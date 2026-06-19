@@ -7,6 +7,17 @@ import PrimaryButton from '../components/PrimaryButton';
 import { fileService, downloadBlob } from '../services/api';
 import './Download.css';
 
+const extractToken = (input) => {
+  if (!input) return '';
+  const trimmed = input.trim();
+  if (trimmed.includes('/download/')) {
+    const parts = trimmed.split('/download/');
+    const tokenPart = parts[parts.length - 1];
+    return tokenPart.split('?')[0].trim();
+  }
+  return trimmed;
+};
+
 export default function Download() {
   const { token: urlToken } = useParams();
   const navigate = useNavigate();
@@ -26,7 +37,8 @@ export default function Download() {
   }, [urlToken]);
 
   const handleFetch = async (tokenToFetch) => {
-    if (!tokenToFetch.trim()) {
+    const extractedToken = extractToken(tokenToFetch);
+    if (!extractedToken) {
       setError('Please enter a valid share token');
       return;
     }
@@ -36,7 +48,7 @@ export default function Download() {
     setFileInfo(null);
 
     try {
-      const info = await fileService.getFileInfo(tokenToFetch);
+      const info = await fileService.getFileInfo(extractedToken);
       setFileInfo(info);
       setSearched(true);
     } catch (err) {
@@ -52,7 +64,9 @@ export default function Download() {
   };
 
   const handleSearch = () => {
-    handleFetch(token);
+    const extracted = extractToken(token);
+    setToken(extracted);
+    handleFetch(extracted);
   };
 
   const handleDownload = async () => {

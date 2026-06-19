@@ -2,7 +2,7 @@ package com.lfs.backend.service;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -61,7 +61,7 @@ public class FileStorageService {
      * This avoids CORS errors that would occur if the browser tried to fetch the URL directly.
      */
     public byte[] fetchRemoteFile(String url) throws IOException {
-        try (InputStream in = new URL(url).openStream()) {
+        try (InputStream in = URI.create(url).toURL().openStream()) {
             return in.readAllBytes();
         }
     }

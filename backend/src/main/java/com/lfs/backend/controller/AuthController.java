@@ -22,7 +22,6 @@ import com.lfs.backend.dto.LoginRequest;
 import com.lfs.backend.dto.RegisterRequest;
 import com.lfs.backend.entity.User;
 import com.lfs.backend.service.AuthService;
-import com.lfs.backend.service.LimitService;
 
 import jakarta.validation.Valid;
 
@@ -35,9 +34,6 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
-
-    @Autowired
-    private LimitService limitService;
 
     /**
      * Helper method to create secure authentication cookies

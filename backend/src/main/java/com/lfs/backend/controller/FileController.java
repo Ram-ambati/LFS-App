@@ -27,7 +27,6 @@ import com.lfs.backend.entity.User;
 import com.lfs.backend.entity.UserLimits;
 import com.lfs.backend.repository.DownloadLogRepository;
 import com.lfs.backend.repository.FileShareRepository;
-import com.lfs.backend.repository.UserRepository;
 import com.lfs.backend.service.AuthService;
 import com.lfs.backend.service.FileStorageService;
 import com.lfs.backend.service.LimitService;
@@ -38,7 +37,6 @@ public class FileController {
 
     private final FileStorageService fileStorageService;
     private final FileShareRepository fileShareRepository;
-    private final UserRepository userRepository;
     private final DownloadLogRepository downloadLogRepository;
     private final AuthService authService;
     private final LimitService limitService;
@@ -46,13 +44,11 @@ public class FileController {
     @Autowired
     public FileController(FileStorageService fileStorageService,
                          FileShareRepository fileShareRepository,
-                         UserRepository userRepository,
                          DownloadLogRepository downloadLogRepository,
                          AuthService authService,
                          LimitService limitService) {
         this.fileStorageService = fileStorageService;
         this.fileShareRepository = fileShareRepository;
-        this.userRepository = userRepository;
         this.downloadLogRepository = downloadLogRepository;
         this.authService = authService;
         this.limitService = limitService;

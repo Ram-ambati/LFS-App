@@ -221,10 +221,16 @@ public class FileController {
             // Log download
             logDownload(fileShare, authentication, guestToken, request);
 
-            byte[] fileContent = fileStorageService.retrieveFile(fileShare.getStoragePath());
+            // If file is stored remotely (e.g. Cloudinary), proxy it server-side to avoid CORS errors
+            byte[] fileContent;
+            if (fileStorageService.isRemoteUrl(fileShare.getStoragePath())) {
+                fileContent = fileStorageService.fetchRemoteFile(fileShare.getStoragePath());
+            } else {
+                fileContent = fileStorageService.retrieveFile(fileShare.getStoragePath());
+            }
 
             return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, 
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
                             "attachment; filename=\"" + fileShare.getOriginalFileName() + "\"")
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
                     .contentLength(fileContent.length)

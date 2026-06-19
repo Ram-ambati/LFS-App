@@ -1,6 +1,8 @@
 package com.lfs.backend.service;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -50,12 +52,21 @@ public class FileStorageService {
         return filePath.toString();
     }
 
-    public byte[] retrieveFile(String storagePath) throws IOException {
-        if (cloudinaryEnabled && storagePath != null && storagePath.startsWith("http")) {
-            // For Cloudinary-stored files, clients should use the URL directly; server can proxy if needed.
-            throw new IllegalArgumentException("Requested file is stored remotely. Proxy not implemented: " + storagePath);
-        }
+    public boolean isRemoteUrl(String storagePath) {
+        return storagePath != null && (storagePath.startsWith("http://") || storagePath.startsWith("https://"));
+    }
 
+    /**
+     * Proxy-download a remote file (e.g. from Cloudinary) server-side.
+     * This avoids CORS errors that would occur if the browser tried to fetch the URL directly.
+     */
+    public byte[] fetchRemoteFile(String url) throws IOException {
+        try (InputStream in = new URL(url).openStream()) {
+            return in.readAllBytes();
+        }
+    }
+
+    public byte[] retrieveFile(String storagePath) throws IOException {
         Path filePath = Paths.get(storagePath);
         if (!Files.exists(filePath)) {
             throw new IllegalArgumentException("File not found: " + storagePath);

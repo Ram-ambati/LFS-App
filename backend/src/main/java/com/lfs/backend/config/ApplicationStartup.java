@@ -23,7 +23,6 @@ public class ApplicationStartup {
             // Drop the old check constraint to support the new ANONYMOUS enum value
             try {
                 jdbcTemplate.execute("ALTER TABLE download_logs DROP CONSTRAINT IF EXISTS download_logs_downloader_type_check");
-                System.out.println("✓ Updated database check constraints for download_logs");
             } catch (Exception e) {
                 System.err.println("Warning: Could not update database check constraints: " + e.getMessage());
             }

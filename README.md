@@ -17,15 +17,32 @@
 
 ---
 
+<p align="center">
+  <a href="https://file-share-app-pearl-eight.vercel.app/" target="_blank">
+    <img src="https://img.shields.io/badge/%F0%9F%94%B4_LIVE-Online_File_Share_App-red?style=for-the-badge" alt="🔴 LIVE" />
+  </a>
+</p>
+
+---
+
 ## 📸 Screenshots
 
-| Welcome Modal | File Upload Dashboard |
-| --- | --- |
-| ![Welcome Screen](./assets/screenshots/welcome.png) | ![Upload Dashboard](./assets/screenshots/upload.png) |
-
-| File Download Page | User Sign In / Register |
-| --- | --- |
-| ![File Download](./assets/screenshots/download.png) | ![Sign In](./assets/screenshots/signin.png) |
+<p align="center">
+  <strong>Welcome / Home Page</strong><br/>
+  <img src="./assets/screenshots/HomePage.png" alt="Welcome Screen" width="800" />
+  <br/><br/><br/>
+  
+  <strong>File Upload Dashboard</strong><br/>
+  <img src="./assets/screenshots/UploadPage.png" alt="Upload Dashboard" width="800" />
+  <br/><br/><br/>
+  
+  <strong>File Download Page</strong><br/>
+  <img src="./assets/screenshots/ExampleDownload.png" alt="File Download" width="800" />
+  <br/><br/><br/>
+  
+  <strong>User Sign In / Register</strong><br/>
+  <img src="./assets/screenshots/LoginPage.png" alt="Sign In" width="800" />
+</p>
 
 ---
 
@@ -159,15 +176,22 @@ docker run -p 8080:8080 --env-file backend/.env lfs-backend
 
 ---
 
-## 🗺️ Roadmap & Progress
+## 🚀 Milestones & Future Goals
 
-- [x] **Config Integration**: Move all hardcoded variables to environment configs.
-- [x] **Dockerize Backend**: Build a secure multi-stage Docker build running as a non-root user.
-- [x] **Vercel Rewrite Fix**: Direct all routes to index.html to support single-page application refresh.
-- [x] **JWT Header Fallback**: Add Authorization headers to support JWT auth in cross-domain layouts.
-- [ ] **Password Protection**: Option to encrypt shared files with a custom password.
-- [ ] **Expiration Timer**: Auto-delete files from storage after a custom set period (e.g. 24h, 7 days).
-- [ ] **Direct Cloud Migration**: Native support for AWS S3 and automated Cloudinary file upload pipelines.
+### ✅ What We've Accomplished
+- **Environment-Driven Configuration**: Moved database credentials, JWT secrets, and CORS domains out of the codebase and into secure environment variables.
+- **Dockerization**: Created a secure, multi-stage production Docker configuration for the Spring Boot backend, running under a dedicated non-root user.
+- **Vercel Routing Rewrite**: Added a `vercel.json` rewrite rule to redirect all paths back to `/index.html`, eliminating the frustrating `404 NOT_FOUND` error on page refresh.
+- **JWT Header Fallback**: Implemented automatic `Authorization: Bearer` headers in the frontend API client. This bypasses the third-party cookie restrictions enforced by modern browsers in cross-domain environments.
+- **Improved UX (URL Pasting)**: Added automated token extraction in the download page, allowing users to paste either the raw token or the full download URL.
+- **Clean Compiler Audits**: Resolved java URL constructor deprecation warnings and cleaned up all unused imports and autowired repository references.
+
+### 🎯 What is Next (Future Scope)
+- 🔒 **Password-Protected Downloads**: Allow uploaders to secure files with custom passwords.
+- ⏱️ **Auto-Expiry Timers**: Implement background tasks to automatically delete files after a selected period (e.g. 24 hours, 7 days).
+- 📈 **Download Limits**: Option to limit the number of times a file can be downloaded before expiring.
+- 📦 **AWS S3 / Cloud Storage Integration**: Expand beyond local disk and Cloudinary to support direct streaming to Amazon S3 bucket storage.
+- 📊 **User Dashboard & File Analytics**: Provide account holders with simple charts tracking download activity, download counts, and total storage usage.
 
 ---
 

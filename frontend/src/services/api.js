@@ -32,7 +32,9 @@ export const fileService = {
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      throw new Error(data.error || data.message || 'Upload failed');
+      const errorObj = new Error(data.error || data.message || 'Upload failed');
+      errorObj.status = response.status;
+      throw errorObj;
     }
 
     return data;

@@ -30,10 +30,34 @@ export const authService = {
       console.error('Error checking session:', error);
     }
 
-    // Check if guest session exists
-    const guestId = this.getGuestId();
+    // Check if guest session exists and validate it
+    let guestId = this.getGuestId();
     if (guestId) {
-      return { type: 'guest', guestId };
+      try {
+        const valRes = await fetch(`${API_BASE}/session/validate?guestToken=${encodeURIComponent(guestId)}`);
+        if (valRes.ok) {
+          const valData = await valRes.json();
+          if (valData.valid) {
+            return { type: 'guest', guestId };
+          }
+        }
+      } catch (e) {
+        console.error('Error validating guest session:', e);
+        // Keep guest token on network/server errors to avoid breaking offline capability
+        return { type: 'guest', guestId };
+      }
+      this.clearGuestId();
+      guestId = null;
+    }
+
+    // If welcome modal has already been seen, auto-generate guest session so they don't get 401s
+    if (this.isWelcomeSeen()) {
+      try {
+        const session = await this.createGuestSession();
+        return { type: 'guest', guestId: session.guestId };
+      } catch (error) {
+        console.error('Error auto-creating guest session:', error);
+      }
     }
 
     return { type: 'new' };

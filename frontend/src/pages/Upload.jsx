@@ -9,7 +9,7 @@ import { fileService } from '../services/api';
 import './Upload.css';
 
 export default function Upload() {
-  const { limits } = useAuth();
+  const { limits, type, startAsGuest } = useAuth();
   const [selectedFile, setSelectedFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadResult, setUploadResult] = useState(null);
@@ -42,7 +42,25 @@ export default function Upload() {
     setError(null);
 
     try {
-      const result = await fileService.uploadFile(selectedFile);
+      // Ensure we have a session before uploading
+      if (type === 'new') {
+        await startAsGuest();
+      }
+
+      let result;
+      try {
+        result = await fileService.uploadFile(selectedFile);
+      } catch (err) {
+        // If unauthenticated/session expired, auto-create guest session and retry upload once (if not signed in)
+        if (err.status === 401 && type !== 'signed-in') {
+          console.warn('Upload unauthorized. Re-initializing guest session and retrying...');
+          await startAsGuest();
+          result = await fileService.uploadFile(selectedFile);
+        } else {
+          throw err;
+        }
+      }
+
       setUploadResult(result);
       setSelectedFile(null);
     } catch (err) {

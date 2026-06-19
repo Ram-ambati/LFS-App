@@ -56,7 +56,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
+
         // Build list of allowed origins
         List<String> allowedOrigins = Arrays.asList(
                 frontendUrl,
@@ -64,7 +64,7 @@ public class SecurityConfig {
                 "http://localhost:3000",   // Alternative frontend port
                 "http://localhost:8080"    // Backend localhost
         );
-        
+
         configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
@@ -94,26 +94,27 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/session/validate").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/limits/current").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/files/download/**").permitAll()
-
+                        .requestMatchers(HttpMethod.GET, "/api/files/info/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/files/upload").permitAll()
                         // Protected endpoints
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/auth/verify").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/files/upload").authenticated()
 
                         // All other requests require authentication
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-                // Security headers
-                http.headers(headers -> {
-                    headers.contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self' https:; img-src 'self' data: https://res.cloudinary.com; script-src 'self' 'unsafe-inline' https:; object-src 'none';"));
-                    headers.frameOptions(frame -> frame.sameOrigin());
-                    headers.httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000));
-                    headers.contentTypeOptions(cto -> {});
-                });
+        // Security headers
+        http.headers(headers -> {
+            headers.contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self' https:; img-src 'self' data: https://res.cloudinary.com; script-src 'self' 'unsafe-inline' https:; object-src 'none';"));
+            headers.frameOptions(frame -> frame.sameOrigin());
+            headers.httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000));
+            headers.contentTypeOptions(cto -> {
+            });
+        });
 
-            return http.build();
+        return http.build();
     }
 }

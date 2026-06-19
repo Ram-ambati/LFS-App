@@ -45,13 +45,15 @@ export const authService = {
       let guestId = this.getGuestId();
       if (!guestId) {
         const response = await fetch(`${API_BASE}/session/guest`, {
-          method: 'GET',
+          method: 'POST',
           credentials: 'include',
         });
         if (response.ok) {
           const data = await response.json();
-          guestId = data.guestId;
+          guestId = data.guestToken;
           this.setGuestId(guestId);
+        } else {
+          throw new Error(`Server returned status ${response.status}`);
         }
       }
       return { type: 'guest', guestId };
@@ -128,7 +130,12 @@ export const authService = {
   // Get current user limits
   async getLimits() {
     try {
-      const response = await fetch(`${API_BASE}/limits/current`, {
+      const guestId = this.getGuestId();
+      const url = guestId
+        ? `${API_BASE}/limits/current?guestToken=${encodeURIComponent(guestId)}`
+        : `${API_BASE}/limits/current`;
+
+      const response = await fetch(url, {
         method: 'GET',
         credentials: 'include',
       });

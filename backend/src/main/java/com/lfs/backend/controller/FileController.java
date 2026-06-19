@@ -77,7 +77,7 @@ public class FileController {
             }
 
             // Determine if user is authenticated or guest
-            if (authentication != null && authentication.isAuthenticated()) {
+            if (authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof Long) {
                 // Registered user upload
                 Long userId = (Long) authentication.getPrincipal();
                 User user = authService.getUserById(userId);
@@ -212,13 +212,14 @@ public class FileController {
     public ResponseEntity<?> downloadFile(
             @PathVariable String token,
             Authentication authentication,
-            @RequestParam(value = "guestToken", required = false) String guestToken) {
+            @RequestParam(value = "guestToken", required = false) String guestToken,
+            jakarta.servlet.http.HttpServletRequest request) {
         try {
             FileShare fileShare = fileShareRepository.findByShareToken(token)
                     .orElseThrow(() -> new IllegalArgumentException("File not found with token: " + token));
 
             // Log download
-            logDownload(fileShare, authentication, guestToken);
+            logDownload(fileShare, authentication, guestToken, request);
 
             byte[] fileContent = fileStorageService.retrieveFile(fileShare.getStoragePath());
 
@@ -244,23 +245,43 @@ public class FileController {
     /**
      * Log download activity
      */
-    private void logDownload(FileShare fileShare, Authentication authentication, String guestToken) {
+    private void logDownload(FileShare fileShare, Authentication authentication, String guestToken, jakarta.servlet.http.HttpServletRequest request) {
         try {
             DownloadLog downloadLog = new DownloadLog();
             downloadLog.setFileShare(fileShare);
 
-            if (authentication != null && authentication.isAuthenticated()) {
+            if (request != null) {
+                // Extract IP address (check X-Forwarded-For if behind a proxy like Render)
+                String ipAddress = request.getHeader("X-Forwarded-For");
+                if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+                    ipAddress = request.getRemoteAddr();
+                }
+                if (ipAddress != null && ipAddress.contains(",")) {
+                    ipAddress = ipAddress.split(",")[0].trim();
+                }
+                downloadLog.setIpAddress(ipAddress);
+
+                // Extract User-Agent
+                String userAgent = request.getHeader("User-Agent");
+                if (userAgent != null && userAgent.length() > 500) {
+                    userAgent = userAgent.substring(0, 500); // Truncate to fit column limit
+                }
+                downloadLog.setUserAgent(userAgent);
+            }
+
+            if (authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof Long) {
                 // Authenticated user download
                 Long userId = (Long) authentication.getPrincipal();
                 downloadLog.setDownloaderType(DownloadLog.DownloaderType.USER);
                 downloadLog.setDownloaderId(userId);
-            } else if (guestToken != null && !guestToken.isEmpty()) {
+            } else if (guestToken != null && !guestToken.isEmpty() && authService.isValidGuestSession(guestToken)) {
                 // Guest download
-                if (authService.isValidGuestSession(guestToken)) {
-                    GuestSession guestSession = authService.getGuestSession(guestToken);
-                    downloadLog.setDownloaderType(DownloadLog.DownloaderType.GUEST);
-                    downloadLog.setDownloaderId(guestSession.getId());
-                }
+                GuestSession guestSession = authService.getGuestSession(guestToken);
+                downloadLog.setDownloaderType(DownloadLog.DownloaderType.GUEST);
+                downloadLog.setDownloaderId(guestSession.getId());
+            } else {
+                // Anonymous download
+                downloadLog.setDownloaderType(DownloadLog.DownloaderType.ANONYMOUS);
             }
 
             downloadLogRepository.save(downloadLog);

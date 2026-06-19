@@ -1,5 +1,13 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
+const getGuestId = () => {
+  try {
+    return localStorage.getItem('lfs_guest_id');
+  } catch (e) {
+    return null;
+  }
+};
+
 export const fileService = {
   /**
    * Upload a file to the backend
@@ -10,9 +18,15 @@ export const fileService = {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch(`${API_BASE_URL}/files/upload`, {
+    const guestId = getGuestId();
+    const url = guestId
+      ? `${API_BASE_URL}/files/upload?guestToken=${encodeURIComponent(guestId)}`
+      : `${API_BASE_URL}/files/upload`;
+
+    const response = await fetch(url, {
       method: 'POST',
       body: formData,
+      credentials: 'include',
     });
 
     const data = await response.json().catch(() => ({}));
@@ -45,7 +59,14 @@ export const fileService = {
    * @returns {Promise<Blob>}
    */
   async downloadFile(token) {
-    const response = await fetch(`${API_BASE_URL}/files/download/${token}`);
+    const guestId = getGuestId();
+    const url = guestId
+      ? `${API_BASE_URL}/files/download/${token}?guestToken=${encodeURIComponent(guestId)}`
+      : `${API_BASE_URL}/files/download/${token}`;
+
+    const response = await fetch(url, {
+      credentials: 'include',
+    });
 
     if (!response.ok) {
       throw new Error(`Download failed: ${response.statusText}`);

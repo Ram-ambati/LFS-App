@@ -39,7 +39,7 @@ public class LimitsController {
             @RequestParam(required = false) String guestToken) {
         try {
             // If authenticated user
-            if (authentication != null && authentication.isAuthenticated()) {
+            if (authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof Long) {
                 Long userId = (Long) authentication.getPrincipal();
                 User user = authService.getUserById(userId);
                 LimitsResponse limits = limitService.getUserLimits(user);

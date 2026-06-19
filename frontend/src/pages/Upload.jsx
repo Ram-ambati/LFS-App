@@ -4,16 +4,24 @@ import UploadZone from '../components/UploadZone';
 import TokenDisplay from '../components/TokenDisplay';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PrimaryButton from '../components/PrimaryButton';
+import { useAuth } from '../hooks/useAuth';
 import { fileService } from '../services/api';
 import './Upload.css';
 
 export default function Upload() {
+  const { limits } = useAuth();
   const [selectedFile, setSelectedFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadResult, setUploadResult] = useState(null);
   const [error, setError] = useState(null);
 
   const handleFileSelect = (file) => {
+    if (limits && file.size > limits.maxFileSize) {
+      const maxMb = (limits.maxFileSize / (1024 * 1024)).toFixed(0);
+      setError(`File size exceeds your limit of ${maxMb}MB.`);
+      setSelectedFile(null);
+      return;
+    }
     setSelectedFile(file);
     setError(null);
   };
@@ -21,6 +29,12 @@ export default function Upload() {
   const handleUpload = async () => {
     if (!selectedFile) {
       setError('Please select a file first');
+      return;
+    }
+
+    if (limits && selectedFile.size > limits.maxFileSize) {
+      const maxMb = (limits.maxFileSize / (1024 * 1024)).toFixed(0);
+      setError(`File size exceeds your limit of ${maxMb}MB.`);
       return;
     }
 

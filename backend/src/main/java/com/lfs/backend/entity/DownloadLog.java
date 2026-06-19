@@ -20,7 +20,7 @@ import jakarta.persistence.Table;
 public class DownloadLog {
 
     public enum DownloaderType {
-        GUEST, USER
+        GUEST, USER, ANONYMOUS
     }
 
     @Id

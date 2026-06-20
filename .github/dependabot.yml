@@ -1,0 +1,20 @@
+# To get started with Dependabot version updates, you'll need to specify which
+# package ecosystems to update and where the package manifests are located.
+# Please see the documentation for all configuration options:
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # Maintain dependencies for the Java Maven backend
+  - package-ecosystem: "maven"
+    directory: "/backend" # Look for pom.xml here
+    schedule:
+      interval: "weekly"
+
+  # Maintain dependencies for the Node.js frontend
+  - package-ecosystem: "npm"
+    directory: "/frontend" # Look for package.json here
+    schedule:
+      interval: "weekly"
+
+ # @author -  Ram-Ambati

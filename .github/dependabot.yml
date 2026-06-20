@@ -9,12 +9,12 @@ updates:
   - package-ecosystem: "maven"
     directory: "/backend" # Look for pom.xml here
     schedule:
-      interval: "weekly"
+      interval: "monthly"
 
   # Maintain dependencies for the Node.js frontend
   - package-ecosystem: "npm"
     directory: "/frontend" # Look for package.json here
     schedule:
-      interval: "weekly"
+      interval: "monthly"
 
  # @author -  Ram-Ambati

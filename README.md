@@ -60,6 +60,28 @@
 
 ---
 
+## 📚 Developer Documentation
+
+We have created comprehensive, in-depth documentation inside the [/docs](./docs) folder to help developers understand, maintain, and extend the LFS-App codebase.
+
+Start with the **[LEARN_THIS_FIRST.md](./docs/LEARN_THIS_FIRST.md)** guide to understand the recommended study order and key concepts.
+
+For a full index, refer to the main **[Documentation README](./docs/README.md)**.
+
+### Available Guides:
+1. **[Project Architecture](./docs/PROJECT_ARCHITECTURE.md)**: High-level overview, design decisions, and technology stack.
+2. **[Frontend Flow](./docs/FRONTEND_FLOW.md)**: React SPA structure, global states, API integrations, and component hierarchies.
+3. **[Backend Flow](./docs/BACKEND_FLOW.md)**: Spring Boot layer organization, request routing, and core service logics.
+4. **[Database Design](./docs/DATABASE_DESIGN.md)**: PostgreSQL schemas, tables, index definitions, and design patterns.
+5. **[Storage System](./docs/STORAGE_SYSTEM.md)**: Cloudinary integration and local file system fallback mechanics.
+6. **[Authentication & Security](./docs/AUTHENTICATION_AND_SECURITY.md)**: JWT lifecycles, guest session tokens, CORS rules, and secure practices.
+7. **[Deployment Guide](./docs/DEPLOYMENT_GUIDE.md)**: Setup guides for Vercel, Render, Supabase, and environment configurations.
+8. **[Feature Walkthroughs](./docs/FEATURE_WALKTHROUGHS.md)**: Sequenced step-by-step lifecycles of major end-to-end user actions.
+9. **[Troubleshooting & Bug History](./docs/TROUBLESHOOTING_AND_BUG_HISTORY.md)**: Confirmed bugs, root causes, fixes, and lessons learned.
+10. **[How to Modify this Project](./docs/HOW_TO_MODIFY_THIS_PROJECT.md)**: Detailed recipes for developers looking to add database entities, endpoints, pages, or new storage systems.
+
+---
+
 ## 🧱 System Architecture
 
 ```text

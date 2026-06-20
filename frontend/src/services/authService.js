@@ -56,7 +56,6 @@ export const authService = {
         return { type: 'guest', guestId };
       }
       this.clearGuestId();
-      guestId = null;
     }
 
     // If welcome modal has already been seen, auto-generate guest session so they don't get 401s
@@ -214,7 +213,7 @@ export const authService = {
   getGuestId() {
     try {
       return localStorage.getItem(GUEST_ID_KEY);
-    } catch (e) {
+    } catch {
       console.error('localStorage not available');
       return null;
     }
@@ -223,7 +222,7 @@ export const authService = {
   setGuestId(guestId) {
     try {
       localStorage.setItem(GUEST_ID_KEY, guestId);
-    } catch (e) {
+    } catch {
       console.error('localStorage not available');
     }
   },
@@ -231,7 +230,7 @@ export const authService = {
   clearGuestId() {
     try {
       localStorage.removeItem(GUEST_ID_KEY);
-    } catch (e) {
+    } catch {
       console.error('localStorage not available');
     }
   },
@@ -240,7 +239,7 @@ export const authService = {
   isWelcomeSeen() {
     try {
       return localStorage.getItem(WELCOME_SEEN_KEY) === 'true';
-    } catch (e) {
+    } catch {
       return false;
     }
   },
@@ -248,7 +247,7 @@ export const authService = {
   setWelcomeSeen() {
     try {
       localStorage.setItem(WELCOME_SEEN_KEY, 'true');
-    } catch (e) {
+    } catch {
       console.error('localStorage not available');
     }
   },
@@ -256,7 +255,7 @@ export const authService = {
   resetWelcome() {
     try {
       localStorage.removeItem(WELCOME_SEEN_KEY);
-    } catch (e) {
+    } catch {
       console.error('localStorage not available');
     }
   },

@@ -3,7 +3,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 const getGuestId = () => {
   try {
     return localStorage.getItem('lfs_guest_id');
-  } catch (e) {
+  } catch {
     return null;
   }
 };

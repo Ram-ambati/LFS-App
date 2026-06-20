@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import './TokenDisplay.css';
 
-export default function TokenDisplay({ token, fileName }) {
+export default function TokenDisplay({ token }) {
   const [copiedField, setCopiedField] = useState(null);
 
   const shareUrl = `${window.location.origin}/download/${token}`;

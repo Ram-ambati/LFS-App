@@ -29,13 +29,6 @@ export default function Download() {
   const [error, setError] = useState(null);
   const [searched, setSearched] = useState(false);
 
-  // Auto-fetch file info if token is in URL
-  useEffect(() => {
-    if (urlToken) {
-      handleFetch(urlToken);
-    }
-  }, [urlToken]);
-
   const handleFetch = async (tokenToFetch) => {
     const extractedToken = extractToken(tokenToFetch);
     if (!extractedToken) {
@@ -62,6 +55,15 @@ export default function Download() {
       setIsLoading(false);
     }
   };
+
+  // Auto-fetch file info if token is in URL
+  useEffect(() => {
+    if (urlToken) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      handleFetch(urlToken);
+    }
+  }, [urlToken]);
+
 
   const handleSearch = () => {
     const extracted = extractToken(token);

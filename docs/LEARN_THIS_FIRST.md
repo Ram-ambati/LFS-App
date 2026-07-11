@@ -47,7 +47,7 @@ Start at Tier 1 and work downward. Don't skip ahead — each concept builds on t
 | `loading` | Auth check in progress | First render, before any API calls resolve |
 | `new` | No session, first visit | No JWT, no guest ID, welcome not seen |
 | `guest` | Has a guest session | UUID token in localStorage, validated by DB |
-| `signed-in` | JWT authenticated | JWT in localStorage + LFS_AUTH cookie |
+| `signed-in` | JWT authenticated | JWT in localStorage |
 
 **What to do:** Read `AuthContext.jsx` top to bottom. Trace the flow of `initializeAuth()` by hand. Ask: *what happens if there's no JWT and no guest ID?*
 
@@ -101,7 +101,7 @@ public String storeFile(MultipartFile file) throws IOException {
 **Why it's essential:** You need to understand what makes an endpoint "protected" vs "public" and how the JWT ends up as an `Authentication` object in controllers.
 
 **The filter runs on every request:**
-1. Extracts JWT from `Authorization: Bearer` header OR `LFS_AUTH` cookie
+1. Extracts JWT from `Authorization: Bearer` header
 2. Validates the JWT
 3. If valid: puts userId into `SecurityContextHolder`
 4. Controller receives populated `Authentication authentication` parameter
@@ -138,7 +138,7 @@ public String storeFile(MultipartFile file) throws IOException {
 | Variable | Where | Critical Because |
 |---|---|---|
 | `VITE_API_BASE_URL` | Frontend `.env` | Points frontend to the correct backend |
-| `APP_ENVIRONMENT` | Backend `.env` | Controls cookie security (dev vs prod) |
+| `APP_ENVIRONMENT` | Backend `.env` | Controls server environment |
 | `FRONTEND_URL` | Backend `.env` | CORS — wrong value = all requests blocked |
 | `JWT_SECRET` | Backend `.env` | Signing JWT tokens — must match across restarts |
 | `CLOUDINARY_*` | Backend `.env` | If missing, files go to local disk (lost on restart) |
@@ -300,14 +300,13 @@ This URL is stored directly in `file_shares.storage_path`.
 ### 2.7 — JWT Token Lifecycle
 **⏱️ 25 minutes | 📄 [JwtTokenProvider.java](../backend/src/main/java/com/lfs/backend/util/JwtTokenProvider.java) + [AUTHENTICATION_AND_SECURITY.md §2](./AUTHENTICATION_AND_SECURITY.md)**
 
-**Why it's important:** Understanding token expiry and the dual-token strategy (access + refresh) is necessary for any auth-related work.
+**Why it's important:** Understanding token expiry is necessary for any auth-related work.
 
 **Key numbers:**
-- Access token: **1 hour** (`JWT_ACCESS_TOKEN_EXPIRATION=3600000` ms)
-- Refresh token: **30 days** (`JWT_REFRESH_TOKEN_EXPIRATION=2592000000` ms)
+- Access token: **7 days** (`JWT_ACCESS_TOKEN_EXPIRATION=604800000` ms)
 - Guest session: **30 days** (set in `GuestSession.java` `@PrePersist`)
 
-**Known gap:** There's no `/api/auth/refresh` endpoint. The refresh token is issued but unused. After 1 hour, users must re-login. This is a feature waiting to be built.
+**Token storage:** The JWT is stored in the browser's `localStorage` and sent via the `Authorization: Bearer <token>` header on requests.
 
 ---
 
@@ -335,10 +334,10 @@ Understanding `FetchType.LAZY` vs `EAGER`, the N+1 query problem, `@Transactiona
 
 ---
 
-### 3.3 — CORS, SameSite, and Cross-Domain Authentication
-**⏱️ 45 minutes | 📄 [SecurityConfig.java §CORS](../backend/src/main/java/com/lfs/backend/config/SecurityConfig.java) + [AuthController.java §cookies](../backend/src/main/java/com/lfs/backend/controller/AuthController.java)**
+### 3.3 — CORS and Cross-Domain Authentication
+**⏱️ 45 minutes | 📄 [SecurityConfig.java §CORS](../backend/src/main/java/com/lfs/backend/config/SecurityConfig.java)**
 
-Understanding exactly why `SameSite=None; Secure` is needed for cross-domain cookies, what `allowCredentials(true)` does in CORS, and why wildcard `*` origins can't be used with credentials. Essential if you change domains, add a mobile app, or add third-party OAuth.
+Understanding CORS configuration, what `allowCredentials(true)` does, and why wildcard `*` origins can't be used with credentials. Essential if you change domains, add a mobile app, or add third-party APIs.
 
 ---
 
@@ -411,7 +410,7 @@ Before your first PR, make sure you can answer all of these:
 - [ ] What are the 4 auth states? What triggers each transition?
 - [ ] Where is the guest token stored on the frontend? On the backend?
 - [ ] What is `storage_path` in `file_shares`? What are its two possible formats?
-- [ ] What does `APP_ENVIRONMENT=production` change about cookies?
+- [ ] What does `APP_ENVIRONMENT=production` control?
 - [ ] Why is `/api/files/upload` marked `permitAll()` in SecurityConfig?
 - [ ] Which layer (controller/service/repository) should validation logic go in?
 - [ ] What happens to a user's files when their account is deleted?

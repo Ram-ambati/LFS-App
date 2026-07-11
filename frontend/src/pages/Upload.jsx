@@ -15,9 +15,9 @@ export default function Upload() {
   const [uploadResult, setUploadResult] = useState(null);
   const [error, setError] = useState(null);
 
-  const handleFileSelect = (file) => {
+  const handleFileSelect = (file) => { //just a frontend check , if file is > user limit.
     if (limits && file.size > limits.maxFileSize) {
-      const maxMb = (limits.maxFileSize / (1024 * 1024)).toFixed(0);
+      const maxMb = (limits.maxFileSize / (1024 * 1024)).toFixed(0); //just some calculation , IM BAD AT MATHS :(
       setError(`File size exceeds your limit of ${maxMb}MB.`);
       setSelectedFile(null);
       return;
@@ -26,13 +26,13 @@ export default function Upload() {
     setError(null);
   };
 
-  const handleUpload = async () => {
+  const handleUpload = async () => { //if no file is selected
     if (!selectedFile) {
       setError('Please select a file first');
       return;
     }
 
-    if (limits && selectedFile.size > limits.maxFileSize) {
+    if (limits && selectedFile.size > limits.maxFileSize) { // we are checkin again?
       const maxMb = (limits.maxFileSize / (1024 * 1024)).toFixed(0);
       setError(`File size exceeds your limit of ${maxMb}MB.`);
       return;
@@ -44,7 +44,7 @@ export default function Upload() {
     try {
       // Ensure we have a session before uploading
       if (type === 'new') {
-        await startAsGuest();
+        await startAsGuest(); //Use auth provides this
       }
 
       let result;
@@ -54,7 +54,7 @@ export default function Upload() {
         // If unauthenticated/session expired, auto-create guest session and retry upload once (if not signed in)
         if (err.status === 401 && type !== 'signed-in') {
           console.warn('Upload unauthorized. Re-initializing guest session and retrying...');
-          await startAsGuest();
+          await startAsGuest(); //I don't think this edge case occurs anymore, but I'm not brave enough to delete it.
           result = await fileService.uploadFile(selectedFile);
         } else {
           throw err;
@@ -65,19 +65,19 @@ export default function Upload() {
       setSelectedFile(null);
     } catch (err) {
       setError(err.message || 'Failed to upload file. Please try again.');
-      console.error('Upload error:', err);
+      console.error('Upload error:', err); //console gets to know. User does not get to know. :)
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleReset = () => {
+  const handleReset = () => { //this resets the upload page (upload complete page ) to the initial state
     setUploadResult(null);
     setSelectedFile(null);
     setError(null);
   };
 
-  if (uploadResult) {
+  if (uploadResult) { //this is for when the file is uploaded
     return (
       <PageContainer className="upload">
         <div className="upload__header">
@@ -85,7 +85,7 @@ export default function Upload() {
         </div>
 
         <div className="upload__result">
-          <TokenDisplay
+          <TokenDisplay //this data goes to a component to show tokens and url?
             token={uploadResult.shareToken}
             fileName={uploadResult.originalFileName}
           />
@@ -98,7 +98,7 @@ export default function Upload() {
     );
   }
 
-  return (
+  return ( 
     <PageContainer className="upload">
       <div className="upload__header">
         <h1>Upload File</h1>
@@ -109,7 +109,7 @@ export default function Upload() {
         <div className="upload__zone-wrapper">
           <UploadZone onFileSelect={handleFileSelect} disabled={isLoading} />
 
-          {selectedFile && (
+          {selectedFile && ( 
             <div className="upload__file-info">
               <div className="upload__file-details">
                 <div className="upload__file-icon">
@@ -117,12 +117,12 @@ export default function Upload() {
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth="2"
+                    strokeWidth="2"  // more Random number and letters incoming (icons).
                   >
                     <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
                     <polyline points="13 2 13 9 20 9"></polyline>
                   </svg>
-                </div>
+                </div> {/*This shows file info thats*/}
                 <div className="upload__file-meta">
                   <p className="upload__file-name">{selectedFile.name}</p>
                   <p className="upload__file-size">
@@ -148,7 +148,7 @@ export default function Upload() {
         <div className="upload__actions">
           <PrimaryButton
             onClick={handleUpload}
-            disabled={!selectedFile || isLoading}
+            disabled={!selectedFile || isLoading}  //button cannot be accessed while file is uploading or no file is selected.
             size="large"
           >
             {isLoading ? (

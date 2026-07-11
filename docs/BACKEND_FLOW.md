@@ -179,7 +179,7 @@ Every HTTP request passes through the security chain defined in [`SecurityConfig
 ```mermaid
 flowchart TD
     Request["HTTP Request"] --> CORS["CORS Filter\n(SecurityConfig.corsConfigurationSource)"]
-    CORS --> JWT["JwtAuthenticationFilter\n(extracts JWT from header or cookie)"]
+    CORS --> JWT["JwtAuthenticationFilter\n(extracts JWT from header)"]
     JWT --> Security["Spring Security\n(checks endpoint permissions)"]
     Security -->|"Public endpoint"| Controller["Controller"]
     Security -->|"Protected endpoint + no token"| Reject["401 Unauthorized"]
@@ -215,23 +215,14 @@ flowchart TD
 
 ### 6c. JWT Authentication Filter
 
-[`JwtAuthenticationFilter.java`](../backend/src/main/java/com/lfs/backend/util/JwtAuthenticationFilter.java) runs on **every request** and looks for a JWT in two places:
+[`JwtAuthenticationFilter.java`](../backend/src/main/java/com/lfs/backend/util/JwtAuthenticationFilter.java) runs on **every request** and looks for a JWT in the `Authorization` header:
 
 ```java
 private String getJwtFromRequest(HttpServletRequest request) {
-    // 1. Check Authorization header: "Bearer <token>"
+    // Check Authorization header: "Bearer <token>"
     String bearerToken = request.getHeader("Authorization");
     if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
         return bearerToken.substring(7);
-    }
-    
-    // 2. Fallback: check "LFS_AUTH" httpOnly cookie
-    if (request.getCookies() != null) {
-        for (Cookie c : request.getCookies()) {
-            if ("LFS_AUTH".equals(c.getName())) {
-                return c.getValue();
-            }
-        }
     }
     return null;
 }
@@ -277,10 +268,8 @@ private String generateToken(User user, long expirationTime) {
 }
 ```
 
-**Access token:** Expires in 1 hour (`JWT_ACCESS_TOKEN_EXPIRATION=3600000` ms)  
-**Refresh token:** Expires in 30 days (`JWT_REFRESH_TOKEN_EXPIRATION=2592000000` ms)
+**Access token:** Expires in 7 days (`JWT_ACCESS_TOKEN_EXPIRATION=604800000` ms)  
 
-> **Note:** The refresh token is issued and stored as a cookie but there is currently **no refresh endpoint** implemented. If the access token expires, the user must log in again. This is a known limitation.
 
 ### Token Validation
 ```java
@@ -307,7 +296,7 @@ For every HTTP request, here's the exact sequence:
 1. Tomcat receives HTTP request
 2. Spring's DispatcherServlet intercepts
 3. JwtAuthenticationFilter.doFilterInternal() runs:
-   a. Extract JWT from header or cookie
+   a. Extract JWT from header
    b. If valid: set Authentication in SecurityContextHolder
    c. Always: filterChain.doFilter() → continue
 4. Spring Security checks endpoint permissions:

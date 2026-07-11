@@ -1,4 +1,6 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+ /* @author : Ram-Ambati
+    This file handles api calls to backend from upload and download pages */
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'; 
 
 const getGuestId = () => {
   try {
@@ -14,12 +16,12 @@ export const fileService = {
    * @param {File} file - The file to upload
    * @returns {Promise<{token: string, fileName: string, fileSize: number}>}
    */
-  async uploadFile(file) {
+  async uploadFile(file) { //uploading a file does need authorization not like download.
     const formData = new FormData();
     formData.append('file', file);
 
     const guestId = getGuestId();
-    const url = guestId
+    const url = guestId // what is this terinary operator?  im new :(
       ? `${API_BASE_URL}/files/upload?guestToken=${encodeURIComponent(guestId)}`
       : `${API_BASE_URL}/files/upload`;
 
@@ -33,7 +35,6 @@ export const fileService = {
       method: 'POST',
       headers,
       body: formData,
-      credentials: 'include',
     });
 
     const data = await response.json().catch(() => ({}));
@@ -67,21 +68,20 @@ export const fileService = {
    * @param {string} token - The share token
    * @returns {Promise<Blob>}
    */
-  async downloadFile(token) {
+  async downloadFile(token) { // the joke is download backedn doesnt even need any authorization.
     const guestId = getGuestId();
-    const url = guestId
+    const url = guestId //backend calls for downloading files.
       ? `${API_BASE_URL}/files/download/${token}?guestToken=${encodeURIComponent(guestId)}`
       : `${API_BASE_URL}/files/download/${token}`;
 
     const headers = {};
-    const jwtToken = localStorage.getItem('lfs_jwt_token');
+    const jwtToken = localStorage.getItem('lfs_jwt_token'); 
     if (jwtToken) {
       headers['Authorization'] = `Bearer ${jwtToken}`;
     }
 
     const response = await fetch(url, {
       headers,
-      credentials: 'include',
     });
 
     if (!response.ok) {

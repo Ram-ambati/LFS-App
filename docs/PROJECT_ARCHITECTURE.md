@@ -130,7 +130,7 @@ backend/src/main/java/com/lfs/backend/
 ├── dto/                           → Request/Response data transfer objects
 └── util/
     ├── JwtTokenProvider.java       → JWT generation, validation, claim extraction
-    └── JwtAuthenticationFilter.java → HTTP filter: extracts JWT from header or cookie
+    └── JwtAuthenticationFilter.java → HTTP filter: extracts JWT from header
 ```
 
 ---
@@ -199,14 +199,13 @@ graph LR
     Supabase["Supabase\nPostgreSQL DB"]
     Cloudinary["Cloudinary\nFile Storage CDN"]
 
-    Vercel -- "CORS + SameSite=None\n(cross-domain cookies)" --> Render
+    Vercel -- "CORS + JWT Authorization\n(Bearer tokens)" --> Render
     Render --> Supabase
     Render --> Cloudinary
 ```
 
 Key cross-domain settings required:
 - **CORS:** Backend allows `frontendUrl` origin (set via `FRONTEND_URL` env var)
-- **Cookies:** `SameSite=None; Secure` so the `LFS_AUTH` cookie works cross-domain over HTTPS
 - **VITE_API_BASE_URL:** Frontend must point to the Render URL (not localhost) in production
 
 ---
@@ -222,7 +221,7 @@ Service Layer (services/authService.js or api.js)
     ↓
 HTTP Request (fetch API)
     ↓
-JwtAuthenticationFilter (extracts token from header or cookie)
+JwtAuthenticationFilter (extracts token from header)
     ↓
 Spring Security (checks endpoint permissions)
     ↓
@@ -249,7 +248,7 @@ CloudinaryService → Cloudinary CDN
 | Layer | Mechanism |
 |---|---|
 | Transport | HTTPS enforced (Vercel, Render, Supabase all HTTPS) |
-| Authentication | JWT in `Authorization: Bearer` header or `LFS_AUTH` httpOnly cookie |
+| Authentication | JWT in `Authorization: Bearer` header |
 | Guest identity | UUID token stored in client localStorage, validated against DB on each request |
 | Password storage | BCrypt hashed; plain text never stored |
 | CORS | Allowlist-based; only configured frontend URL allowed |
@@ -263,7 +262,6 @@ CloudinaryService → Cloudinary CDN
 | Aspect | Development | Production |
 |---|---|---|
 | File storage | Local `/uploads` directory | Cloudinary CDN |
-| Auth cookies | No `Secure` flag (allows HTTP) | `Secure; SameSite=None` (HTTPS required) |
 | API URL | `http://localhost:8080` via Vite proxy | `https://lfs-app.onrender.com` via env var |
 | DB | Same Supabase (shared) | Same Supabase |
 | ENV loading | `.env` file read by `BackendApplication.java` | Environment variables set on Render dashboard |

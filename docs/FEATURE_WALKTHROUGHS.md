@@ -263,9 +263,8 @@ flowchart TD
     I -->|"Yes"| J["400: Username already taken"]
     I -->|"No"| K["BCrypt.hash(password)"]
     K --> L["Save User to DB"]
-    L --> M["Generate access JWT + refresh JWT"]
-    M --> N["Set LFS_AUTH + LFS_REFRESH cookies"]
-    N --> O["201 Created\n{ id, username, email, role, token }"]
+    L --> M["Generate access JWT"]
+    M --> O["201 Created\n{ id, username, email, role, token }"]
 ```
 
 ### Database Interactions
@@ -309,8 +308,8 @@ sequenceDiagram
     Backend->>DB: SELECT WHERE email = ?
     DB-->>Backend: User record
     Backend->>Backend: BCrypt.matches(password, hash)
-    Backend->>Backend: Generate access + refresh JWT
-    Backend-->>authService: 200 { token, ... } + Set-Cookie headers
+    Backend->>Backend: Generate access JWT
+    Backend-->>authService: 200 { token, ... }
     authService->>authService: localStorage.setItem('lfs_jwt_token', token)
     authService->>authService: clearGuestId() — remove any guest session
     authService->>Backend: GET /api/limits/current (with JWT)
@@ -336,8 +335,6 @@ Clear the user's session and return to an unauthenticated state.
 
 ```
 POST /api/auth/logout (requires JWT)
-→ Server sets Set-Cookie: LFS_AUTH=; maxAge=0 (clears access token cookie)
-→ Server sets Set-Cookie: LFS_REFRESH=; maxAge=0 (clears refresh token cookie)
 → 200 { message: "Logged out successfully" }
 ```
 

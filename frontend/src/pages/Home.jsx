@@ -22,15 +22,15 @@ export default function Home() {
 
       <div className="home__cards">
         <div
-          className="home__card home__card--upload"
+          className="home__card home__card--upload"  //upload card
           onClick={() => navigate('/upload')}
         >
           <div className="home__card-icon">
             <svg
               viewBox="0 0 24 24"
               fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
+              stroke="currentColor"  // bro how do these icons even work? Like how does this draw a tray?
+              strokeWidth="2" // and we are dawing arrow below , i cant put a comment there :) its upside down U-shaped tray with rounded top corners
             >
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="17 8 12 3 7 8"></polyline>
@@ -43,7 +43,7 @@ export default function Home() {
           </p>
           <div className="home__card-arrow">
             <svg
-              viewBox="0 0 24 24"
+              viewBox="0 0 24 24" //arrow pointing rightside
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
@@ -55,15 +55,15 @@ export default function Home() {
         </div>
 
         <div
-          className="home__card home__card--download"
+          className="home__card home__card--download"  //download card
           onClick={() => navigate('/download')}
         >
           <div className="home__card-icon">
             <svg
               viewBox="0 0 24 24"
               fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
+              stroke="currentColor" //and some icons are here
+              strokeWidth="2" // and i dont know what below code is doing AI said its U-shaped tray with rounded bottom corners
             >
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="7 10 12 15 17 10"></polyline>
@@ -76,7 +76,7 @@ export default function Home() {
           </p>
           <div className="home__card-arrow">
             <svg
-              viewBox="0 0 24 24"
+              viewBox="0 0 24 24" //same arrow poing right side
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
@@ -92,7 +92,7 @@ export default function Home() {
         <div className="home__feature">
           <div className="home__feature-icon">
             <svg
-              viewBox="0 0 24 24"
+              viewBox="0 0 24 24"  // this is shield icon
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
@@ -107,7 +107,7 @@ export default function Home() {
         <div className="home__feature">
           <div className="home__feature-icon">
             <svg
-              viewBox="0 0 24 24"
+              viewBox="0 0 24 24"  // its a pulse icon idk man
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
@@ -122,7 +122,7 @@ export default function Home() {
         <div className="home__feature">
           <div className="home__feature-icon">
             <svg
-              viewBox="0 0 24 24"
+              viewBox="0 0 24 24" //its person icon ?
               fill="none"
               stroke="currentColor"
               strokeWidth="2"

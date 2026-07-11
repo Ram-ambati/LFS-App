@@ -23,22 +23,22 @@ export default function Register() {
       return;
     }
 
-    if (password !== passwordConfirm) {
+    if (password !== passwordConfirm) { // making sure they didn't typo the password, happens to me all the time
       setError('Passwords do not match');
       return;
     }
 
-    if (password.length < 8) {
+    if (password.length < 8) { // 8 characters or else backend is gonna scream at us
       setError('Password must be at least 8 characters');
       return;
     }
 
-    setIsLoading(true);
-    const result = await register(username, email, password, passwordConfirm);
+    setIsLoading(true); // disable button and show loading so user doesn't spam registration
+    const result = await register(username, email, password, passwordConfirm); // signs up and logs in instantly, gets a fresh 7-day token
     if (result.success) {
       navigate('/');
     } else {
-      setError(result.error || 'Registration failed');
+      setError(result.error || 'Registration failed'); // handles registration failure (e.g. username taken)
     }
     setIsLoading(false);
   };
@@ -51,7 +51,7 @@ export default function Register() {
           <div className="auth-header">
             <div className="auth-logo">LFS</div>
             <h1 className="auth-title">Create Account</h1>
-            <p className="auth-subtitle">Join to unlock premium features</p>
+            <p className="auth-subtitle">Join to unlock premium features</p> {/* we dont have any premium featires */}
           </div>
 
           {/* Form */}
@@ -64,7 +64,7 @@ export default function Register() {
                 Username
               </label>
               <input
-                id="username"
+                id="username" 
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -102,7 +102,7 @@ export default function Register() {
                 className="form-input"
                 disabled={isLoading}
               />
-              <p className="form-help">At least 8 characters</p>
+              <p className="form-help">At least 8 characters</p> {/* honestly who in the world is not using 8 chars as passwprd*/}
             </div>
 
             <div className="form-group">
@@ -113,7 +113,7 @@ export default function Register() {
                 id="passwordConfirm"
                 type="password"
                 value={passwordConfirm}
-                onChange={(e) => setPasswordConfirm(e.target.value)}
+                onChange={(e) => setPasswordConfirm(e.target.value)} /* sometimes the user might be drunk, hence the confirmation */
                 placeholder="••••••••"
                 className="form-input"
                 disabled={isLoading}

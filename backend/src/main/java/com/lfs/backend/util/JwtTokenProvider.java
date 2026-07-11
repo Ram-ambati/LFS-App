@@ -20,11 +20,10 @@ public class JwtTokenProvider {
     @Value("${jwt.secret:your-secret-key-must-be-at-least-256-bits-long-for-hs256-algorithm-use}")
     private String jwtSecret;
 
-    @Value("${jwt.access-token-expiration:3600000}")  // 1 hour in milliseconds
+    @Value("${jwt.access-token-expiration:604800000}")  // 7 days in milliseconds
     private long accessTokenExpiration;
 
-    @Value("${jwt.refresh-token-expiration:2592000000}")  // 30 days in milliseconds
-    private long refreshTokenExpiration;
+
 
     /**
      * Generate JWT access token for user
@@ -33,12 +32,7 @@ public class JwtTokenProvider {
         return generateToken(user, accessTokenExpiration);
     }
 
-    /**
-     * Generate JWT refresh token for user
-     */
-    public String generateRefreshToken(User user) {
-        return generateToken(user, refreshTokenExpiration);
-    }
+
 
     /**
      * Generate JWT token with custom expiration

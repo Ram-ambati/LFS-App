@@ -6,47 +6,23 @@
 
 ---
 
-## 1. Cross-Domain Cookie Issue (CONFIRMED — from AuthController code)
+## 1. Cross-Domain Cookie Authentication Issue (Removed / Deprecated)
 
-### Problem
-After deploying frontend to Vercel and backend to Render, user login appeared to succeed (JWT token received), but subsequent requests were not authenticated. The `LFS_AUTH` cookie set during login was not being sent to the backend on API calls.
+### Historical Problem
+Initially, the application used both a JWT in `localStorage` and a dual `httpOnly` cookie backup (`LFS_AUTH` and `LFS_REFRESH`) set during login/register. After deploying the frontend to Vercel and backend to Render, user login appeared to succeed (JWT token received), but subsequent requests failed to send the cookie fallback, causing cross-domain cookie transmission issues.
 
 ### Root Cause
-The frontend (Vercel domain) and backend (Render domain) are on **different domains**. Modern browsers apply the `SameSite` cookie policy — by default, cookies set by one domain are not sent to requests to a different domain.
+The frontend (Vercel domain) and backend (Render domain) are on **different domains**. Modern browsers apply strict `SameSite` cookie policies, blocking cross-domain cookies unless configured with `SameSite=None; Secure`, which in turn required explicit CORS configurations and broke local HTTP development.
 
-Additionally, cookies marked `Secure` won't be transmitted over HTTP. In development, the backend runs on HTTP localhost, which broke the `Secure` flag.
+### Resolution
+To permanently resolve these issues and simplify the security architecture, the cookie mechanics (`LFS_AUTH` and `LFS_REFRESH`) were **completely deprecated and removed**. 
 
-### Solution Implemented
+The system now relies exclusively on standard JWT transmission:
+- The frontend stores the JWT in `localStorage` under `lfs_jwt_token`.
+- Every authenticated request attaches the token in the `Authorization: Bearer <token>` header.
+- The backend's `JwtAuthenticationFilter` resolves authentication solely from the `Authorization` header.
 
-**AuthController.java** creates cookies differently based on environment:
-```java
-private ResponseCookie createAccessTokenCookie(String token) {
-    ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from("LFS_AUTH", token)
-        .httpOnly(true)
-        .path("/")
-        .maxAge(3600);
-
-    if (!"development".equals(environment)) {  // Only in production
-        builder.secure(true)      // HTTPS only
-               .sameSite("None"); // Allow cross-domain
-    }
-    return builder.build();
-}
-```
-
-Environment is controlled via `APP_ENVIRONMENT` env var:
-- Local: `APP_ENVIRONMENT=development` → No `Secure; SameSite=None`
-- Production: `APP_ENVIRONMENT=production` → Full cross-domain cookie support
-
-**SecurityConfig.java** also requires explicit CORS with `allowCredentials(true)`:
-```java
-configuration.setAllowCredentials(true);
-// Note: wildcard origins (*) cannot be used with allowCredentials=true
-configuration.setAllowedOrigins(allowedOrigins);  // Explicit list
-```
-
-### Lesson Learned
-Cross-domain authentication always requires `SameSite=None; Secure` cookies **and** explicit CORS `allowCredentials`. Both are needed; one without the other won't work. Always test with the actual production domain pair, not just localhost.
+This stateless, header-based approach completely bypasses cross-domain cookie policies and ensures consistent behavior across all environments.
 
 ---
 

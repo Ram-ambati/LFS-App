@@ -13,21 +13,21 @@ export default function SignIn() {
   const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); // standard react stuff to stop page from refreshing on submit, learned this the hard way
     setError('');
     setIsLoading(true);
 
-    if (!email || !password) {
+    if (!email || !password) { // standard frontend check so we don't send empty requests to backend
       setError('Please fill in all fields');
       setIsLoading(false);
       return;
     }
 
-    const result = await login(email, password);
+    const result = await login(email, password); // calls AuthContext login, sets token valid for 7 days so we don't get logged out in 1 hour
     if (result.success) {
-      navigate('/');
+      navigate('/'); // login success, redirecting to home!
     } else {
-      setError(result.error || 'Sign in failed');
+      setError(result.error || 'Sign in failed'); // if it fails, error state is updated. make sure not to manually mess with localstorage tokens to fix login!
     }
     setIsLoading(false);
   };
@@ -39,7 +39,7 @@ export default function SignIn() {
           {/* Header */}
           <div className="auth-header">
             <div className="auth-logo">LFS</div>
-            <h1 className="auth-title">Welcome Back</h1>
+            <h1 className="auth-title">Welcome Back</h1> {/*  well well welcome */}
             <p className="auth-subtitle">Sign in to your account</p>
           </div>
 
@@ -72,7 +72,7 @@ export default function SignIn() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="••••••••" //atleast we dont need to type this twice.     HUH :/
                 className="form-input"
                 disabled={isLoading}
               />
@@ -90,7 +90,7 @@ export default function SignIn() {
           {/* Footer */}
           <div className="auth-footer">
             <p className="auth-footer-text">
-              Don't have an account?{' '}
+              Don't have an account?{' '}               {/*  just go back and create one then :| */}
               <Link to="/register" className="auth-link">
                 Create one
               </Link>

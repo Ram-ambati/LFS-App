@@ -11,7 +11,6 @@
 graph TB
     subgraph "Frontend (Browser)"
         LS["localStorage\n- lfs_jwt_token\n- lfs_guest_id\n- lfs_welcome_seen"]
-        CK["httpOnly Cookies\n- LFS_AUTH (access JWT)\n- LFS_REFRESH (refresh JWT)"]
     end
 
     subgraph "Backend Filter Chain"
@@ -21,12 +20,10 @@ graph TB
 
     subgraph "Identity Sources"
         JWT["JWT Bearer Token\n(Authorization header)"]
-        Cookie["LFS_AUTH Cookie\n(fallback)"]
         Guest["guestToken query param\n(?guestToken=uuid)"]
     end
 
     JWT --> F1
-    Cookie --> F1
     F1 --> F2
     F2 --> Controller["Controller\n(receives Authentication object)"]
     Guest --> Controller
@@ -34,9 +31,8 @@ graph TB
 
 The backend identity resolution priority:
 1. **JWT in `Authorization: Bearer` header** → sets Spring `Authentication` object
-2. **JWT in `LFS_AUTH` httpOnly cookie** → sets Spring `Authentication` object (fallback)
-3. **`?guestToken=` query parameter** → handled manually in FileController/LimitsController
-4. **Nothing** → `Authentication` is null; may be 401 depending on endpoint
+2. **`?guestToken=` query parameter** → handled manually in FileController/LimitsController
+3. **Nothing** → `Authentication` is null; may be 401 depending on endpoint
 
 ---
 
@@ -58,13 +54,9 @@ sequenceDiagram
     DB-->>AuthService: User entity
     AuthService->>AuthService: passwordEncoder.matches(input, hash)
     AuthService->>JwtTokenProvider: generateAccessToken(user)
-    JwtTokenProvider-->>AuthService: "eyJhbGci..." (JWT, 1 hour expiry)
-    AuthService->>JwtTokenProvider: generateRefreshToken(user)
-    JwtTokenProvider-->>AuthService: "eyJhbGci..." (JWT, 30 day expiry)
-    AuthService-->>AuthController: AuthResponse { user, accessToken, refreshToken }
-    AuthController->>AuthController: createAccessTokenCookie(accessToken)
-    AuthController->>AuthController: createRefreshTokenCookie(refreshToken)
-    AuthController-->>Client: 200 OK\nbody: { id, username, email, role, token }\nSet-Cookie: LFS_AUTH=...; LFS_REFRESH=...
+    JwtTokenProvider-->>AuthService: "eyJhbGci..." (JWT, 7 days expiry)
+    AuthService-->>AuthController: AuthResponse { user, accessToken }
+    AuthController-->>Client: 200 OK\nbody: { id, username, email, role, token }
     Client->>Client: localStorage.setItem('lfs_jwt_token', data.token)
 ```
 
@@ -92,9 +84,7 @@ flowchart TD
     B --> C["getJwtFromRequest()"]
     C --> D{"Bearer header present?"}
     D -->|"Yes"| E["Extract token after 'Bearer '"]
-    D -->|"No"| F{"LFS_AUTH cookie present?"}
-    F -->|"Yes"| E
-    F -->|"No"| G["jwt = null\nNo authentication set"]
+    D -->|"No"| G["jwt = null\nNo authentication set"]
     E --> H["jwtTokenProvider.validateToken(jwt)"]
     H -->|"Valid (not expired, sig OK)"| I["Extract userId and role from claims"]
     H -->|"Invalid"| G
@@ -125,6 +115,40 @@ public ResponseEntity<?> uploadFile(
 ```
 
 The principal is set to `userId` (a `Long`) in the filter — not the username or User object. This is a deliberate design choice to avoid a DB call in the filter itself.
+
+### 2e. Cold-Start Resilience: Optimistic JWT Decode + Background Retry
+
+**Problem:** Render (the backend host) spins down containers after ~15 minutes of inactivity. First visits after a cold period caused a 30–60 second delay on `/auth/me`. The old code interpreted any non-200 response (including 503 Service Unavailable) as "no session", then created a fake local guest ID — overwriting the user's valid JWT.
+
+**Solution implemented in `authService.js` + `AuthContext.jsx`:**
+
+```
+Phase 1 — Instant (checkSession, no network):
+  1. Read lfs_jwt_token from localStorage
+  2. decodeJwtPayload(token)  → base64-decode the JWT payload
+  3. isJwtExpired(token)      → check exp claim vs Date.now()
+  4. If not expired → getUserFromJwt() → return { type:'signed-in', user, optimistic: true }
+  5. User sees their name immediately, app is interactive
+
+Phase 2 — Background (verifySessionWithRetry, in parallel):
+  Attempt 1: GET /api/auth/me → wait 4s if fails
+  Attempt 2: GET /api/auth/me → wait 8s if fails
+  Attempt 3: GET /api/auth/me → wait 12s if fails
+  Attempt 4: GET /api/auth/me → wait 16s if fails
+  Attempt 5: GET /api/auth/me → wait 20s if fails
+  Attempt 6: GET /api/auth/me → give up if fails (after 60s total)
+
+  On 200 OK  → update authState with server-authoritative user data
+  On 401     → JWT is actually invalid → downgrade to type:'new'
+  On null    → backend still unreachable → keep optimistic state
+```
+
+**Key behaviour changes:**
+- `createGuestSession()` no longer has a local fallback. It throws if the backend is unreachable.
+- `checkSession()` catches that throw and returns `type: 'new'` (honest) instead of creating a fake local guest ID (broken).
+- The `getLimits()` fallback now returns **registered-user defaults** (100MB) when a JWT is present, not guest defaults (5MB). This prevents upload size rejections during cold-start when limits can't be fetched.
+
+> **Security note on client-side JWT decode:** `decodeJwtPayload()` uses `atob()` to read the JWT claims — it does **not** verify the signature. A user could theoretically modify their JWT payload bytes. However, every actual API call (upload, limits, download) is validated by `JwtAuthenticationFilter` on the backend which **does** verify the signature via `JwtTokenProvider.validateToken()`. The optimistic decode is only used for the UI display (showing username in the Navbar) — never for access control decisions.
 
 ---
 
@@ -187,25 +211,10 @@ This is a public endpoint — no auth required. If the session is invalid (expir
 
 ---
 
-## 4. Cookie Architecture
+## 4. Token Storage
 
-Two httpOnly cookies are set on login and registration:
+JWTs are stored in the browser's `localStorage` as `lfs_jwt_token`. On subsequent requests, the frontend reads the token and passes it in the `Authorization: Bearer <token>` HTTP header.
 
-| Cookie Name | Value | Max Age | Purpose |
-|---|---|---|---|
-| `LFS_AUTH` | Access JWT | 3600s (1 hour) | Short-lived auth token for API requests |
-| `LFS_REFRESH` | Refresh JWT | 2592000s (30 days) | Long-lived token (refresh flow not yet implemented) |
-
-**Cookie Attributes by Environment:**
-
-| Attribute | Development | Production |
-|---|---|---|
-| `HttpOnly` | ✅ | ✅ |
-| `Secure` | ❌ (allows HTTP) | ✅ (HTTPS only) |
-| `SameSite` | (default, usually Lax) | `None` (cross-domain) |
-| `Path` | `/` | `/` |
-
-> **Why `SameSite=None` in production?** The frontend (Vercel) and backend (Render) are on different domains. By default, modern browsers block cookies from being sent cross-domain. `SameSite=None; Secure` allows the `LFS_AUTH` cookie to flow from the browser to `lfs-app.onrender.com` even when the page is on `lfs-app.vercel.app`.
 
 ---
 
@@ -251,14 +260,10 @@ List<String> allowedOrigins = Arrays.asList(
     "http://localhost:8080"   // Backend localhost (for testing)
 );
 
-configuration.setAllowCredentials(true);  // Required for cookies
+configuration.setAllowCredentials(true);  // Allowed for credentials/headers
 configuration.setAllowedHeaders(Arrays.asList("*"));  // All headers allowed
 configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 ```
-
-> **Why `allowCredentials(true)`?** This is required for the browser to send the `LFS_AUTH` cookie in cross-origin requests. Without it, even if the backend sets the cookie, the browser won't include it in subsequent requests.
-
-> **Why a specific list instead of `"*"` for origins?** When `allowCredentials(true)` is set, `"*"` is not allowed by the CORS spec for security reasons. You must list explicit origins.
 
 ---
 
@@ -298,7 +303,7 @@ http.headers(headers -> {
 |---|---|---|---|
 | `/api/auth/register` | POST | None | Public sign-up |
 | `/api/auth/login` | POST | None | Public login |
-| `/api/auth/logout` | POST | JWT | Clears cookies |
+| `/api/auth/logout` | POST | JWT | Logs out user (clears local token on frontend) |
 | `/api/auth/me` | GET | JWT | Returns user profile |
 | `/api/auth/verify` | GET | JWT | Validates token |
 | `/api/session/guest` | POST | None | Creates guest session |
@@ -319,29 +324,26 @@ http.headers(headers -> {
 
 - **Passwords:** BCrypt hashed, never logged or returned
 - **JWT signing:** Long random secret key (256-bit hex), HS256 algorithm
-- **Cookie security:** HttpOnly prevents XSS from stealing tokens; Secure prevents HTTP transmission in prod
 - **CORS:** Explicit allowlist, not wildcard
 - **SQL injection:** Impossible via JPA parameterized queries
 - **DB connection:** SSL required (`sslmode=require` on Supabase)
+- **Render cold-start auth:** Optimistic JWT decode + background retry prevents phantom guest session creation when backend is waking up (fixed)
 
 ### ⚠️ Known Limitations / Future Concerns
 
 | Issue | Risk Level | Description |
 |---|---|---|
-| No token refresh endpoint | Medium | Refresh token is issued but there's no `/api/auth/refresh` endpoint. Users must re-login after 1 hour. |
 | Guest token in URL | Low | The `guestToken` is sent as a query parameter in URLs like `/api/files/upload?guestToken=xxx`. This means the token can appear in server logs. |
 | No file type validation | Medium | The backend accepts any file type. Malicious files (e.g., executables) can be uploaded and shared. Consider adding MIME type allowlists. |
 | No download limits enforced | Low | `UserLimits.maxDownloads` is stored but never enforced in the download endpoint. The limit exists in the DB but has no enforcement logic. |
 | Memory-based file proxying | Medium | `Files.readAllBytes()` and `fetchRemoteFile()` load entire files into JVM heap. A 100 MB file would allocate 100 MB of memory per concurrent download. |
 | No rate limiting | Medium | No protection against brute-force token guessing or upload flooding. Should add Spring's rate limiting or an API gateway like Cloudflare. |
 | JWT secret in .env | High | The `.env` file in the repo contains the actual JWT secret and database credentials. This `.env` file is in `.gitignore` but if committed accidentally it would expose all secrets. |
-| CSRF disabled | Low | `csrf.disable()` in SecurityConfig. Safe because the app uses JWT Bearer tokens (not session cookies) for authentication, making CSRF attacks ineffective. But `SameSite=None` cookies are theoretically CSRF-vulnerable. |
 
 ### 🔒 Recommendations for Future Contributors
 
-1. **Implement token refresh:** Add `POST /api/auth/refresh` that accepts the `LFS_REFRESH` cookie and issues a new access token
-2. **Add file type allowlist:** Validate MIME types on upload (e.g., only allow documents, images, archives)
-3. **Stream large files:** Replace `readAllBytes()` with streaming responses using `InputStreamResource`
-4. **Add rate limiting:** Use Spring Boot rate limiting or a Cloudflare WAF rule
-5. **Move guest token to header:** Send guestToken in a custom header (`X-Guest-Token`) instead of URL query param to keep it out of logs
-6. **Enforce download limits:** Add a check in `FileController.downloadFile()` against `UserLimits.maxDownloads`
+1. **Add file type allowlist:** Validate MIME types on upload (e.g., only allow documents, images, archives)
+2. **Stream large files:** Replace `readAllBytes()` with streaming responses using `InputStreamResource`
+3. **Add rate limiting:** Use Spring Boot rate limiting or a Cloudflare WAF rule
+4. **Move guest token to header:** Send guestToken in a custom header (`X-Guest-Token`) instead of URL query param to keep it out of logs
+5. **Enforce download limits:** Add a check in `FileController.downloadFile()` against `UserLimits.maxDownloads`

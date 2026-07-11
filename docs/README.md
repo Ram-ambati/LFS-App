@@ -15,13 +15,14 @@
 | 3 | **[BACKEND_FLOW.md](./BACKEND_FLOW.md)** | Spring Boot layers, security, JWT, file handling, error handling | 20 min |
 | 4 | **[DATABASE_DESIGN.md](./DATABASE_DESIGN.md)** | ER diagram, table explanations, schema decisions | 15 min |
 | 5 | **[STORAGE_SYSTEM.md](./STORAGE_SYSTEM.md)** | Cloudinary integration, local fallback, upload/download workflow | 15 min |
-| 6 | **[AUTHENTICATION_AND_SECURITY.md](./AUTHENTICATION_AND_SECURITY.md)** | JWT flow, guest sessions, cookies, CORS, security headers | 20 min |
+| 6 | **[AUTHENTICATION_AND_SECURITY.md](./AUTHENTICATION_AND_SECURITY.md)** | JWT flow, guest sessions, CORS, security headers | 20 min |
 | 7 | **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** | Local setup, Render, Vercel, Supabase, env vars, CI/CD | 20 min |
 | 8 | **[FEATURE_WALKTHROUGHS.md](./FEATURE_WALKTHROUGHS.md)** | End-to-end flow for every major feature with sequence diagrams | 25 min |
 | 9 | **[TROUBLESHOOTING_AND_BUG_HISTORY.md](./TROUBLESHOOTING_AND_BUG_HISTORY.md)** | Known bugs, root causes, fixes, lessons learned | 20 min |
 | 10 | **[HOW_TO_MODIFY_THIS_PROJECT.md](./HOW_TO_MODIFY_THIS_PROJECT.md)** | Step-by-step guides for adding endpoints, entities, pages, storage | 30 min |
+| 11 | **[EXECUTION_FLOWS.md](./EXECUTION_FLOWS.md)** | Exact runtime traces for every user journey, browser → DB → browser | 40 min |
 
-**Total cover-to-cover reading time: ~3 hours**
+**Total cover-to-cover reading time: ~3.5 hours**
 
 ---
 
@@ -66,7 +67,7 @@ Browser (React + Vite)          Backend (Spring Boot + Docker)
 - **Backend:** Spring Boot 4 (Java 17), containerized with Docker, deployed on Render
 - **Database:** PostgreSQL on Supabase (5 tables)
 - **File Storage:** Cloudinary in production, local `/uploads` folder in development
-- **Auth:** JWT (access: 1h, refresh: 30d) + Guest UUID tokens (30d)
+- **Auth:** JWT (7 days expiry) + Guest UUID tokens (30d)
 
 ---
 

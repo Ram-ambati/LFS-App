@@ -116,36 +116,55 @@ stateDiagram-v2
 
 ## 4. Authentication Flow
 
-### 4a. Initialization on App Mount
+### 4a. Initialization on App Mount (Optimistic + Background Verification)
 
-When the app first loads, `AuthContext` runs `checkSession()`:
+When the app first loads, `AuthContext` runs `checkSession()`. As of the current implementation, the startup uses a **two-phase approach** to survive Render cold-start delays:
+
+**Phase 1 — Instant (no network call):** Decode the JWT locally in the browser
+**Phase 2 — Background:** Verify with the backend using retries (4s, 8s, 12s, 16s, 20s delays)
 
 ```mermaid
 flowchart TD
-    A["App mounts\ntype = 'loading'"] --> B["GET /api/auth/me\n(with JWT from localStorage)"]
-    B -->|"200 OK"| C["type = 'signed-in'\nFetch limits"]
-    B -->|"401"| D["JWT invalid → clear it\nCheck localStorage for lfs_guest_id"]
-    D -->|"Guest ID found"| E["GET /api/session/validate?guestToken=xxx"]
-    E -->|"valid: true"| F["type = 'guest'\nFetch limits"]
-    E -->|"valid: false"| G["Clear guest ID from localStorage"]
-    G -->|"isWelcomeSeen() = true"| H["Auto-create new guest session\ntype = 'guest'"]
-    G -->|"isWelcomeSeen() = false"| I["type = 'new'\nShow WelcomeModal"]
-    D -->|"No Guest ID"| J["isWelcomeSeen()?"]
-    J -->|"Yes"| H
-    J -->|"No"| I
+    A["App mounts\ntype = 'loading'"] --> B{"lfs_jwt_token\nin localStorage?"}
+
+    B -->|"Yes"| C{"isJwtExpired?\n(decode locally, no API call)"}
+    C -->|"Not expired"| D["INSTANT: type = 'signed-in'\nUser sees their name NOW\nFetch limits from fallback"]
+    C -->|"Expired / corrupt"| E["Clear JWT\nFall through to guest check"]
+
+    D --> F["BACKGROUND: verifySessionWithRetry()\nGET /api/auth/me with retries"]
+    F -->|"200 OK"| G["Update user + limits\nwith fresh server data"]
+    F -->|"401 Unauthorized"| H["Token rejected by server\nDowngrade to type = 'new'"]
+    F -->|"All retries fail\n(backend still spinning up)"| I["Keep optimistic state\nUser stays signed-in"]
+
+    B -->|"No JWT"| E
+    E --> J{"lfs_guest_id in\nlocalStorage?"}
+    J -->|"Yes"| K["GET /api/session/validate?guestToken=..."]
+    K -->|"valid: true"| L["type = 'guest'\nFetch limits"]
+    K -->|"valid: false"| M["Clear guest ID"]
+    K -->|"Network error"| N["Keep guest token\nAssume still valid"]
+    M --> O{"isWelcomeSeen()?"}
+    J -->|"No"| O
+    O -->|"Yes"| P["POST /api/session/guest\nAuto-create new guest session"]
+    P -->|"Success"| L
+    P -->|"Backend unreachable"| Q["type = 'new'\nNo fake guest ID created"]
+    O -->|"No"| Q
 ```
 
-> **Why auto-create a guest session if welcome is already seen?** If a returning visitor's guest session expired (they last visited >30 days ago), we don't want to show them the WelcomeModal again. Instead, we silently create a new guest session so their upload works without friction. This avoids 401 errors for returning users.
+> **Why optimistic decode?** When Render spins down after inactivity, it takes 30–60 seconds to wake up. The old code tried `/auth/me` immediately — if that returned a non-200 response (503, network error), it fell through to guest creation. In the worst case it generated a **fake local guest ID** that the backend never recognised, overwriting the valid JWT. Now, if you have a non-expired JWT we trust it immediately without a network call. Server verification happens silently in the background.
+
+> **Why retries with linear backoff (4s, 8s, 12s, 16s, 20s)?** This gives Render up to 60 seconds of retries, which safely covers its typical ~50s sleep delay. If the server is still not up after that, the user keeps their optimistic signed-in state. The next page navigation or upload attempt will either work (server is up now) or fail gracefully.
+
+> **No more fake guest IDs:** `createGuestSession()` no longer has a local fallback. If the backend is unreachable, it throws — and `checkSession()` catches it and returns `type: 'new'` instead. A `type: 'new'` state is honest; a fake guest ID causes every subsequent upload/limit call to fail with 401.
 
 ### 4b. localStorage Keys
 
-The frontend stores two keys in `localStorage`:
+The frontend stores these keys in `localStorage`:
 
 | Key | Value | Purpose |
 |---|---|---|
+| `lfs_jwt_token` | JWT string | Sent as `Authorization: Bearer` header; also decoded locally for optimistic auth |
 | `lfs_guest_id` | UUID string (the guest token) | Identifies the guest session; sent as `?guestToken=` query param |
 | `lfs_welcome_seen` | `"true"` | Prevents showing WelcomeModal on return visits |
-| `lfs_jwt_token` | JWT string | Sent as `Authorization: Bearer` header for authenticated requests |
 
 ### 4c. Login / Registration Flow
 
@@ -159,7 +178,7 @@ sequenceDiagram
     SignIn.jsx->>AuthContext: login(email, password)
     AuthContext->>authService: login(email, password)
     authService->>Backend: POST /api/auth/login { email, password }
-    Backend-->>authService: 200 { id, username, email, role, token, refreshToken }\n+ Set-Cookie: LFS_AUTH=...; LFS_REFRESH=...
+    Backend-->>authService: 200 { id, username, email, role, token }
     authService->>authService: localStorage.setItem('lfs_jwt_token', token)
     authService->>authService: clearGuestId()
     authService-->>AuthContext: { success: true, user: {...} }
@@ -170,7 +189,24 @@ sequenceDiagram
     SignIn.jsx->>SignIn.jsx: navigate('/')
 ```
 
-> **Dual token strategy:** The backend issues both a JWT and sets an `httpOnly` cookie (`LFS_AUTH`). The frontend uses the JWT in `Authorization` headers. The cookie is a backup — `JwtAuthenticationFilter` checks both. This handles scenarios where the cookie is available but the localStorage token isn't (e.g., browser cleared storage).
+
+
+### 4d. JWT Decode Helpers (authService.js)
+
+Three pure utility functions were added to `authService.js` to enable optimistic decode — they run entirely in the browser with no network call:
+
+```javascript
+// Splits the JWT and base64-decodes the payload (middle) segment
+function decodeJwtPayload(token)
+
+// Checks if the JWT exp claim is in the past (with a 30s safety buffer)
+function isJwtExpired(token)
+
+// Extracts { id, username, email, role } from JWT claims
+function getUserFromJwt(token)
+```
+
+> **Security note:** Decoding the JWT on the frontend does NOT verify the signature. Anyone can decode a JWT. That's fine — decoding just reads the claims to show the user their name. The signature is verified by the backend on every API call. We never trust the decoded claims for access control, only for display.
 
 ---
 
@@ -280,7 +316,6 @@ if (token) {
 const response = await fetch(url, {
   method: 'POST',
   headers,
-  credentials: 'include',  // Always included so cookies are sent
   body: JSON.stringify(data)
 });
 
@@ -291,7 +326,7 @@ const url = guestId
   : `${API_BASE}/files/upload`;
 ```
 
-> **Why `credentials: 'include'` everywhere?** The backend sets httpOnly cookies (`LFS_AUTH`, `LFS_REFRESH`) on login. `credentials: 'include'` tells the browser to send these cookies on subsequent requests. Without it, cross-domain cookies are blocked.
+
 
 ---
 

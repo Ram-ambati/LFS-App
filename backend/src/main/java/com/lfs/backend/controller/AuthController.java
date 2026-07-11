@@ -5,9 +5,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,77 +27,10 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    @Value("${app.environment:development}")
-    private String environment;
+
 
     @Autowired
     private AuthService authService;
-
-    /**
-     * Helper method to create secure authentication cookies
-     * - In production: includes Secure flag for HTTPS and SameSite=None for cross-domain
-     * - In development: excludes Secure flag to support HTTP localhost
-     */
-    private ResponseCookie createAccessTokenCookie(String token) {
-        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from("LFS_AUTH", token)
-                .httpOnly(true)
-                .path("/")
-                .maxAge(3600);  // 1 hour
-
-        if (!"development".equals(environment)) {
-            builder.secure(true)          // HTTPS only
-                   .sameSite("None");     // Allow cross-domain (Vercel -> Render)
-        }
-        return builder.build();
-    }
-
-    /**
-     * Helper method to create refresh token cookie
-     */
-    private ResponseCookie createRefreshTokenCookie(String token) {
-        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from("LFS_REFRESH", token)
-                .httpOnly(true)
-                .path("/")
-                .maxAge(2592000);  // 30 days
-
-        if (!"development".equals(environment)) {
-            builder.secure(true)
-                   .sameSite("None");
-        }
-        return builder.build();
-    }
-
-    /**
-     * Helper method to clear authentication cookies (for logout)
-     */
-    private ResponseCookie clearAccessTokenCookie() {
-        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from("LFS_AUTH", "")
-                .httpOnly(true)
-                .path("/")
-                .maxAge(0);
-
-        if (!"development".equals(environment)) {
-            builder.secure(true)
-                   .sameSite("None");
-        }
-        return builder.build();
-    }
-
-    /**
-     * Helper method to clear refresh token cookie
-     */
-    private ResponseCookie clearRefreshTokenCookie() {
-        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from("LFS_REFRESH", "")
-                .httpOnly(true)
-                .path("/")
-                .maxAge(0);
-
-        if (!"development".equals(environment)) {
-            builder.secure(true)
-                   .sameSite("None");
-        }
-        return builder.build();
-    }
 
     /**
      * Register new user
@@ -110,15 +41,7 @@ public class AuthController {
         try {
             AuthResponse authResponse = authService.register(request);
             
-            // Create secure authentication cookies
-            ResponseCookie accessCookie = createAccessTokenCookie(authResponse.getToken());
-            ResponseCookie refreshCookie = createRefreshTokenCookie(authResponse.getRefreshToken());
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.SET_COOKIE, accessCookie.toString());
-            headers.add(HttpHeaders.SET_COOKIE, refreshCookie.toString());
-
-            return ResponseEntity.status(HttpStatus.CREATED).headers(headers).body(authResponse);
+            return ResponseEntity.status(HttpStatus.CREATED).body(authResponse);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ErrorResponse(400, e.getMessage()));
@@ -137,15 +60,7 @@ public class AuthController {
         try {
             AuthResponse authResponse = authService.login(request);
             
-            // Create secure authentication cookies
-            ResponseCookie accessCookie = createAccessTokenCookie(authResponse.getToken());
-            ResponseCookie refreshCookie = createRefreshTokenCookie(authResponse.getRefreshToken());
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.SET_COOKIE, accessCookie.toString());
-            headers.add(HttpHeaders.SET_COOKIE, refreshCookie.toString());
-
-            return ResponseEntity.ok().headers(headers).body(authResponse);
+            return ResponseEntity.ok(authResponse);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ErrorResponse(401, e.getMessage()));
@@ -177,23 +92,11 @@ public class AuthController {
         }
     }
 
-    /**
-     * Logout user
-     * POST /api/auth/logout
-     */
     @PostMapping("/logout")
     public ResponseEntity<?> logout() {
-        // Clear authentication cookies by setting maxAge to 0
-        ResponseCookie accessCookie = clearAccessTokenCookie();
-        ResponseCookie refreshCookie = clearRefreshTokenCookie();
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.SET_COOKIE, accessCookie.toString());
-        headers.add(HttpHeaders.SET_COOKIE, refreshCookie.toString());
-
         Map<String, String> response = new HashMap<>();
         response.put("message", "Logged out successfully");
-        return ResponseEntity.ok().headers(headers).body(response);
+        return ResponseEntity.ok(response);
     }
 
     /**

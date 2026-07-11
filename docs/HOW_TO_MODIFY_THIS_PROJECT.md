@@ -116,8 +116,7 @@ export const fileService = {
         if (!token) throw new Error('Not authenticated');
         
         const response = await fetch(`${API_BASE_URL}/files/list`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-            credentials: 'include'
+            headers: { 'Authorization': `Bearer ${token}` }
         });
         
         if (!response.ok) throw new Error('Failed to fetch files');
@@ -519,7 +518,7 @@ console.log('Auth state:', auth);
 | Mutating state directly | `state.someArray.push(item)` won't trigger re-renders | Always create a new reference: `setState([...state.someArray, item])` |
 | Not cleaning up `useEffect` | Memory leaks, stale state updates on unmounted components | Return a cleanup function from `useEffect` |
 | Setting state in a `useEffect` with missing deps | Stale closures, missing updates | Use the ESLint plugin `react-hooks/exhaustive-deps` — don't ignore its warnings |
-| Storing sensitive data in localStorage | localStorage is accessible by any JavaScript on the page (XSS risk) | Use it only for non-sensitive data like guest IDs and welcome flags; use httpOnly cookies for auth tokens |
+| Storing sensitive data in localStorage | localStorage is accessible by any JavaScript on the page (XSS risk) | Keep token validity windows short and limit storing highly sensitive information in localStorage |
 
 ### Database / Schema
 
@@ -534,6 +533,5 @@ console.log('Auth state:', auth);
 | Mistake | Why It's Wrong | Correct Approach |
 |---|---|---|
 | Committing `.env` to Git | Exposes all credentials publicly | Double-check `.gitignore` before every commit |
-| Not setting `APP_ENVIRONMENT=production` | Cookies won't have `SameSite=None; Secure`, breaking cross-domain auth | Always set this on Render |
 | Frontend `VITE_API_BASE_URL` points to localhost | Production users get 404/refused connection | Set to Render backend URL in Vercel environment variables |
 | Using Render free tier without Cloudinary | Files stored locally are lost on container restart | Always configure Cloudinary for production |

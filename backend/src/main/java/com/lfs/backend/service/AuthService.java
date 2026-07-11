@@ -67,9 +67,8 @@ public class AuthService {
 
         // Generate tokens
         String accessToken = jwtTokenProvider.generateAccessToken(savedUser);
-        String refreshToken = jwtTokenProvider.generateRefreshToken(savedUser);
 
-        return new AuthResponse(savedUser, accessToken, refreshToken);
+        return new AuthResponse(savedUser, accessToken);
     }
 
     /**
@@ -87,9 +86,8 @@ public class AuthService {
 
         // Generate tokens
         String accessToken = jwtTokenProvider.generateAccessToken(user);
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user);
 
-        return new AuthResponse(user, accessToken, refreshToken);
+        return new AuthResponse(user, accessToken);
     }
 
     /**

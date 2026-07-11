@@ -1,3 +1,9 @@
+/* 
+@author : Ram-Ambati
+The main entry point of the Spring Boot application. 
+It parses your local .env configuration file and boots up the Spring context.
+*/
+
 package com.lfs.backend;
 
 import java.io.IOException;

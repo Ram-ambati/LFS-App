@@ -52,14 +52,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
-        // Fallback: check for auth cookie (httpOnly cookie set by server)
-        if (request.getCookies() != null) {
-            for (jakarta.servlet.http.Cookie c : request.getCookies()) {
-                if ("LFS_AUTH".equals(c.getName())) {
-                    return c.getValue();
-                }
-            }
-        }
         return null;
     }
 }

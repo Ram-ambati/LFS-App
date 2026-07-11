@@ -9,18 +9,11 @@ public class AuthResponse {
     private String email;
     private String role;
     private String token;
-    private String refreshToken;
+
 
     public AuthResponse() {}
 
-    public AuthResponse(User user, String token, String refreshToken) {
-        this.id = user.getId();
-        this.username = user.getUsername();
-        this.email = user.getEmail();
-        this.role = user.getRole().toString();
-        this.token = token;
-        this.refreshToken = refreshToken;
-    }
+
 
     public AuthResponse(User user, String token) {
         this.id = user.getId();
@@ -70,11 +63,5 @@ public class AuthResponse {
         this.token = token;
     }
 
-    public String getRefreshToken() {
-        return refreshToken;
-    }
 
-    public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
-    }
 }

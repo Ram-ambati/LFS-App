@@ -7,7 +7,7 @@ import PrimaryButton from '../components/PrimaryButton';
 import { fileService, downloadBlob } from '../services/api';
 import './Download.css';
 
-const extractToken = (input) => {
+const extractToken = (input) => { //when user pastes enitre url in token textbox this function extracts only the token.
   if (!input) return '';
   const trimmed = input.trim();
   if (trimmed.includes('/download/')) {
@@ -18,7 +18,7 @@ const extractToken = (input) => {
   return trimmed;
 };
 
-export default function Download() {
+export default function Download() { 
   const { token: urlToken } = useParams();
   const navigate = useNavigate();
 
@@ -29,10 +29,10 @@ export default function Download() {
   const [error, setError] = useState(null);
   const [searched, setSearched] = useState(false);
 
-  const handleFetch = async (tokenToFetch) => {
+  const handleFetch = async (tokenToFetch) => { // starting fetch here....
     const extractedToken = extractToken(tokenToFetch);
     if (!extractedToken) {
-      setError('Please enter a valid share token');
+      setError('Please enter a valid share token'); //extraction first
       return;
     }
 
@@ -41,7 +41,7 @@ export default function Download() {
     setFileInfo(null);
 
     try {
-      const info = await fileService.getFileInfo(extractedToken);
+      const info = await fileService.getFileInfo(extractedToken);  //Now flow goes into /services/api.js
       setFileInfo(info);
       setSearched(true);
     } catch (err) {
@@ -60,13 +60,13 @@ export default function Download() {
   useEffect(() => {
     if (urlToken) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      handleFetch(urlToken);
+      handleFetch(urlToken); //this is when we enter with a full url with token in it , passes to same Handle Fetch
     }
   }, [urlToken]);
 
 
   const handleSearch = () => {
-    const extracted = extractToken(token);
+    const extracted = extractToken(token); //this is passed to the function at the top .
     setToken(extracted);
     handleFetch(extracted);
   };
@@ -86,12 +86,12 @@ export default function Download() {
     }
   };
 
-  const handleReset = () => {
+  const handleReset = () => {  //this is reset function cleans up the download page 
     setToken('');
     setFileInfo(null);
     setError(null);
     setSearched(false);
-    navigate('/download');
+    navigate('/download'); // clear token from url, fresh start
   };
 
   if (fileInfo) {
@@ -124,7 +124,7 @@ export default function Download() {
                     year: 'numeric',
                     month: 'short',
                     day: 'numeric',
-                    hour: '2-digit',
+                    hour: '2-digit', //Created at :  details
                     minute: '2-digit',
                   })}
                 </span>
@@ -141,7 +141,7 @@ export default function Download() {
 
           <div className="download__actions">
             <PrimaryButton
-              onClick={handleDownload}
+              onClick={handleDownload}  // this starts it allll :()
               disabled={isDownloading}
               size="large"
             >
@@ -164,8 +164,8 @@ export default function Download() {
     );
   }
 
-  return (
-    <PageContainer className="download">
+  return ( // this is the search token page if no token was searched yet
+    <PageContainer className="download">  
       <div className="download__header">
         <h1>Download File</h1>
         <p>Enter a share token to download a file</p>
@@ -180,7 +180,7 @@ export default function Download() {
             id="token-input"
             type="text"
             className="download__input"
-            placeholder="Paste your share token here..."
+            placeholder="Paste your share token here..."  //just some placeholders
             value={token}
             onChange={(e) => {
               setToken(e.target.value);
@@ -222,7 +222,7 @@ export default function Download() {
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="2"
+            strokeWidth="2"  // again some kids writtings , that doesnt make sense.
           >
             <circle cx="12" cy="12" r="10"></circle>
             <line x1="12" y1="16" x2="12" y2="12"></line>

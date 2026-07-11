@@ -113,8 +113,7 @@ Open `http://localhost:5173` in your browser.
 | `SPRING_DATASOURCE_USERNAME` | ✅ | — | DB username |
 | `SPRING_DATASOURCE_PASSWORD` | ✅ | — | DB password |
 | `JWT_SECRET` | ✅ | (insecure default) | HS256 signing key (min 32 chars) |
-| `JWT_ACCESS_TOKEN_EXPIRATION` | ❌ | `3600000` | Access token lifetime (ms) |
-| `JWT_REFRESH_TOKEN_EXPIRATION` | ❌ | `2592000000` | Refresh token lifetime (ms) |
+| `JWT_ACCESS_TOKEN_EXPIRATION` | ❌ | `604800000` | Access token lifetime (ms) |
 | `APP_ENVIRONMENT` | ❌ | `development` | `development` or `production` |
 | `FRONTEND_URL` | ❌ | `http://localhost:5173` | Allowed CORS origin |
 | `SPRING_JPA_HIBERNATE_DDL_AUTO` | ❌ | `update` | Schema management |
@@ -207,7 +206,7 @@ CLOUDINARY_API_SECRET = your_api_secret
 SPRING_JPA_HIBERNATE_DDL_AUTO = update
 ```
 
-> **Critical:** Set `APP_ENVIRONMENT=production`. This enables `SameSite=None; Secure` on cookies. Without it, login cookies won't work cross-domain.
+
 
 > **Critical:** Set `FRONTEND_URL` to your exact Vercel URL (e.g., `https://lfs-app.vercel.app`). CORS will block requests from any other origin.
 
